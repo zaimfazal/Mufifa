@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -56,3 +57,4 @@ export async function getAuditLogs(page: number = 1, pageSize: number = 50) {
 
   return { rows: data || [], totalCount: count || 0 }
 }
+

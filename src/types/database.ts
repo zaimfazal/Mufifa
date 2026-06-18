@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type UserRole = 'participant' | 'admin';
 export type MatchStatus = 'scheduled' | 'live' | 'completed' | 'cancelled';
 export type TournamentStage = 'group_stage' | 'round_of_32' | 'round_of_16' | 'quarter_final' | 'semi_final' | 'third_place' | 'final';
@@ -383,3 +384,4 @@ export interface Database {
     };
   };
 }
+

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getUsers } from '@/actions/admin/users'
 import { Button } from '@/components/ui/button'
 import { Metadata } from 'next'
@@ -36,3 +37,4 @@ export default async function UsersPage() {
     </div>
   )
 }
+

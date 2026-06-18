@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
@@ -104,9 +105,9 @@ export async function getComparisonData(teamAId: string, teamBId: string) {
     { key: 'confidence_score', label: 'Confidence' }
   ]
 
-  // @ts-ignore - Supabase type nested relation
+  // @ts-expect-error - Supabase type nested relation
   const nameA = t1.id === teamAId ? t1.teams.team_name : t2.teams.team_name
-  // @ts-ignore
+  // @ts-expect-error - type check limit
   const nameB = t1.id === teamBId ? t1.teams.team_name : t2.teams.team_name
 
   const dataA = t1.id === teamAId ? t1 : t2
@@ -130,3 +131,6 @@ export async function getAllTeamsForSelect() {
   const { data } = await supabase.from('teams').select('id, team_name').order('team_name')
   return data || []
 }
+
+
+

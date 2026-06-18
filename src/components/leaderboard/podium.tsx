@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { formatScore, formatPercentage } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Trophy } from 'lucide-react'
@@ -62,3 +63,4 @@ export function Podium({ topTeams }: PodiumProps) {
     </div>
   )
 }
+

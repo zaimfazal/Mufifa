@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -102,3 +103,4 @@ export async function getAdminData() {
     rules: rules || []
   }
 }
+

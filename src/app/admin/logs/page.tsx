@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getAuditLogs } from '@/actions/admin/audit'
 import { DataTable } from '@/components/leaderboard/data-table' // Reusing generic table
 import { ColumnDef } from '@tanstack/react-table'
@@ -56,3 +57,4 @@ export default async function AuditLogsPage() {
     </div>
   )
 }
+

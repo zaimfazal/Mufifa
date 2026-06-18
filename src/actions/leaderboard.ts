@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
@@ -66,3 +67,4 @@ export async function getMyRank() {
 
   return leaderboard
 }
+

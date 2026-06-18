@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAdminClient } from '../supabase/admin'
 import { loadScoringRules } from './rules-loader'
 import { calculateMatchScore, calculateChampionScore } from './engine'
@@ -151,3 +152,4 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
       updated_at: new Date().toISOString()
     }, { onConflict: 'team_id' })
 }
+

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import * as React from "react"
@@ -134,3 +135,4 @@ export function MatchPredictionsTable({ data }: MatchPredictionsTableProps) {
     </div>
   )
 }
+

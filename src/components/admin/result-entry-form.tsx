@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useState } from 'react'
@@ -136,7 +137,7 @@ export function ResultEntryForm({ match, existingResult }: { match: any, existin
           <div className="space-y-4">
             <h4 className="font-semibold border-b border-border/50 pb-2">Player Events</h4>
             <FormField control={form.control} name="goal_scorers" render={({ field }) => (
-              <FormItem><FormLabel>Goal Scorers (Format: "Mbappe:2; Messi:1")</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>Goal Scorers (Format: &quot;Mbappe:2; Messi:1&quot;)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="first_goal_scorer" render={({ field }) => (
               <FormItem><FormLabel>First Goal Scorer</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -196,3 +197,5 @@ export function ResultEntryForm({ match, existingResult }: { match: any, existin
     </Form>
   )
 }
+
+

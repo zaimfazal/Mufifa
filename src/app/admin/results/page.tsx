@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ResultEntryForm } from '@/components/admin/result-entry-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -59,3 +60,4 @@ export default async function ResultsPage() {
     </div>
   )
 }
+

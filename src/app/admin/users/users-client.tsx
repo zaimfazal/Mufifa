@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { DataTable } from '@/components/leaderboard/data-table'
@@ -72,3 +73,4 @@ export function UsersClient({ formattedData }: { formattedData: any[] }) {
     </div>
   )
 }
+

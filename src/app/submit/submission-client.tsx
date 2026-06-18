@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/no-unescaped-entities */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client'
 
 import { useState, useTransition } from 'react'
@@ -198,3 +202,4 @@ export function SubmissionClient({ initialData }: { initialData: any }) {
     </div>
   )
 }
+

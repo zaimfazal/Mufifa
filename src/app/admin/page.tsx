@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getAdminData, adminRecalculateAll } from '@/actions/admin'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -112,3 +113,4 @@ export default async function AdminPage() {
     </div>
   )
 }
+

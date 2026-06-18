@@ -16,9 +16,10 @@ export function Footer() {
           </Link>
         </div>
         <p className="text-sm text-muted-foreground hidden sm:block">
-          &copy; {new Date().getFullYear()} µFifa '26. All rights reserved.
+          &copy; {new Date().getFullYear()} µFifa &apos;26. All rights reserved.
         </p>
       </div>
     </footer>
   )
 }
+
