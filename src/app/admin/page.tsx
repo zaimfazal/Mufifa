@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Users, FileSpreadsheet, RefreshCw, Settings, ShieldAlert } from 'lucide-react'
 import { revalidatePath } from 'next/cache'
+import Link from 'next/link'
+import { RecalculateButton } from './recalculate-button'
 
 export default async function AdminPage() {
   let data
@@ -21,11 +23,6 @@ export default async function AdminPage() {
   }
 
   const { stats, matches, rules } = data
-
-  const handleRecalculate = async () => {
-    'use server'
-    await adminRecalculateAll()
-  }
 
   return (
     <div className="container mx-auto py-10 px-4 space-y-8">
@@ -62,12 +59,7 @@ export default async function AdminPage() {
             <CardTitle className="text-sm font-medium text-destructive uppercase">Danger Zone</CardTitle>
           </CardHeader>
           <CardContent>
-            <form action={handleRecalculate}>
-              <Button type="submit" variant="destructive" className="w-full">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Recalculate All Scores
-              </Button>
-            </form>
+            <RecalculateButton />
           </CardContent>
         </Card>
       </div>
@@ -90,8 +82,10 @@ export default async function AdminPage() {
                 </Badge>
               </div>
             ))}
-            <Button variant="outline" className="w-full">View All Matches</Button>
-          </CardContent>
+            <Link href="/admin/matches" className="w-full block">
+              <Button variant="outline" className="w-full">View All Matches</Button>
+            </Link>
+          </CardContent>>
         </Card>
 
         <Card className="glass-panel border-border/50">
@@ -106,7 +100,9 @@ export default async function AdminPage() {
                 <div className="font-mono text-accent">+{rule.points}</div>
               </div>
             ))}
-            <Button variant="outline" className="w-full">Edit Scoring Weights</Button>
+            <Link href="/admin/scoring" className="w-full block">
+              <Button variant="outline" className="w-full">Edit Scoring Weights</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
