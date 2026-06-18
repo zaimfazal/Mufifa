@@ -3,8 +3,6 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('prediction-files', 'prediction-files', false)
 ON CONFLICT (id) DO NOTHING;
 
--- Enable RLS on storage.objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- Allow users to upload to their own team's folder
 CREATE POLICY "Users can upload to their team folder" ON storage.objects
