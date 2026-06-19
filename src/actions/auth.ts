@@ -9,9 +9,14 @@ export async function signUp(formData: FormData) {
   const password = formData.get('password') as string
   const supabase = await createClient()
 
+  const origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      emailRedirectTo: `${origin}/auth/callback`,
+    },
   })
 
   if (error) {

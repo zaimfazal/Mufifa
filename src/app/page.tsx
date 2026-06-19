@@ -1,10 +1,18 @@
 /* eslint-disable react/no-unescaped-entities */
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Trophy, FileSpreadsheet, BrainCircuit, BarChart3, ChevronRight, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 
-export default async function Home() {
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
+
+export default async function Home(props: { searchParams?: SearchParams }) {
+  const searchParams = props.searchParams ? await props.searchParams : undefined
+  if (searchParams?.code && typeof searchParams.code === 'string') {
+    redirect(`/auth/callback?code=${searchParams.code}`)
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
