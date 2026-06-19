@@ -175,6 +175,9 @@ export function ResultEntryForm({ match, existingResult }: { match: any, existin
             <FormField control={form.control} name="yellow_home" render={({ field }) => (
               <FormItem><FormLabel>Yellow H</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
+            <FormField control={form.control} name="red_home" render={({ field }) => (
+              <FormItem><FormLabel>Red H</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-2">
             <div className="col-span-2"></div>
@@ -186,6 +189,9 @@ export function ResultEntryForm({ match, existingResult }: { match: any, existin
             )} />
             <FormField control={form.control} name="yellow_away" render={({ field }) => (
               <FormItem><FormLabel>Yellow A</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="red_away" render={({ field }) => (
+              <FormItem><FormLabel>Red A</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
           </div>
         </div>

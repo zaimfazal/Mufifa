@@ -14,8 +14,9 @@ export function RecalculateButton() {
       setLoading(true)
       await adminRecalculateAll()
       toast.success("Scores successfully recalculated for all users")
-    } catch (e: any) {
-      toast.error(e.message || "Failed to recalculate scores")
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to recalculate scores"
+      toast.error(message)
     } finally {
       setLoading(false)
     }

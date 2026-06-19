@@ -86,7 +86,7 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
   // Load actuals with match details (multiplier)
   const { data: actuals } = await supabase
     .from('actual_results')
-    .select('*, matches(multiplier)')
+    .select('*, matches(multiplier, home_team, away_team)')
 
   let totalScore = 0
   let maxPossible = 0

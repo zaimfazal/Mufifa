@@ -7,11 +7,27 @@ import { normalizePlayerName } from '../csv/name-normalizer'
 type Prediction = Database['public']['Tables']['predictions']['Row']
 type Actual = Database['public']['Tables']['actual_results']['Row']
 
+function normalizeOutcome(value: string | null, actual: Actual): string | null {
+  if (!value) return null
+  const normalized = value.trim().toLowerCase()
+  if (normalized === 'draw') return 'draw'
+  if (normalized === 'home' || normalized === 'away') return normalized
+
+  const match = (actual as Actual & { matches?: { home_team?: string | null; away_team?: string | null } | null }).matches
+  if (match?.home_team && normalized === match.home_team.trim().toLowerCase()) return 'home'
+  if (match?.away_team && normalized === match.away_team.trim().toLowerCase()) return 'away'
+
+  return normalized
+}
+
 export function calculateOutcomeScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>) {
-  if (actual.winner === 'draw' && prediction.winner === 'draw') {
+  const predictedWinner = normalizeOutcome(prediction.winner, actual)
+  const actualWinner = normalizeOutcome(actual.winner, actual)
+
+  if (actualWinner === 'draw' && predictedWinner === 'draw') {
     return { points: rules['correct_draw']?.points || 0, type: 'draw' }
   }
-  if (actual.winner !== 'draw' && prediction.winner === actual.winner) {
+  if (actualWinner !== 'draw' && predictedWinner === actualWinner) {
     return { points: rules['correct_winner']?.points || 0, type: 'winner' }
   }
   return { points: 0, type: 'none' }
@@ -144,8 +160,10 @@ export function calculatePenaltyScore(prediction: Prediction, actual: Actual, ru
 export function calculateConfidenceScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>) {
   if (prediction.confidence === null || prediction.confidence <= 80) return 0
 
-  const isWinnerCorrect = (actual.winner !== 'draw' && prediction.winner === actual.winner) || 
-                          (actual.winner === 'draw' && prediction.winner === 'draw')
+  const predictedWinner = normalizeOutcome(prediction.winner, actual)
+  const actualWinner = normalizeOutcome(actual.winner, actual)
+  const isWinnerCorrect = (actualWinner !== 'draw' && predictedWinner === actualWinner) ||
+                          (actualWinner === 'draw' && predictedWinner === 'draw')
 
   if (isWinnerCorrect) {
     return rules['confidence_bonus']?.points || 0

@@ -2,29 +2,9 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { recalculateAll, recalculateForMatch } from '@/lib/scoring/calculator'
-
-// Check if current user is admin
-async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-
-  if (profile?.role !== 'admin') {
-    throw new Error('Not authorized')
-  }
-
-  return user
-}
+import { requireAdmin } from './admin/require-admin'
 
 export async function adminRecalculateAll() {
   try {
@@ -47,9 +27,6 @@ export async function adminUpdateMatchResult(formData: FormData) {
     const matchId = formData.get('match_id') as string
     const homeScore = parseInt(formData.get('home_score') as string)
     const awayScore = parseInt(formData.get('away_score') as string)
-    
-    // Simplification for brevity:
-    // A complete implementation would parse penalties, extra time, etc. from the form
     
     let winner = 'draw'
     if (homeScore > awayScore) winner = 'home'

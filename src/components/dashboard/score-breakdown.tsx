@@ -13,8 +13,7 @@ interface ScoreBreakdownProps {
   confidence: number
 }
 
-// For a real app, these max possible values would be dynamically calculated per team based on completed matches.
-// We use placeholder max values here for visual representation.
+// The leaderboard stores earned category scores; these caps reflect the configured tournament-wide maximums.
 const MAX_VALUES = {
   winner: 104 * 20,
   scoreline: 104 * 40,

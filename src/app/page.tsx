@@ -346,7 +346,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
             <div>
               <h2 className="text-3xl font-bold tracking-tight mb-6">Who Should Participate?</h2>
               <p className="text-muted-foreground mb-8">
-                Whether you're building your first predictive model or operating a sophisticated ML pipeline, this challenge provides a unique opportunity to test your skills on a global sporting event.
+                Whether you&apos;re building your first predictive model or operating a sophisticated ML pipeline, this challenge provides a unique opportunity to test your skills on a global sporting event.
               </p>
               
               <div className="grid grid-cols-2 gap-4">

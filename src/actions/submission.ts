@@ -34,11 +34,12 @@ export async function uploadSubmission(formData: FormData) {
   }
 
   // Fetch valid matches
-  const { data: matches } = await supabase.from('matches').select('match_code')
-  const validMatchIds = matches?.map(m => m.match_code) || []
+  const { data: matches } = await supabase
+    .from('matches')
+    .select('match_code, home_team, away_team')
 
   // Validate
-  const validationResult = validateCsv(rows, validMatchIds)
+  const validationResult = validateCsv(rows, matches || [])
 
   if (!validationResult.valid) {
     // Record failed submission attempt

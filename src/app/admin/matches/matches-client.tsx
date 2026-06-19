@@ -4,10 +4,23 @@
 import { DataTable } from '@/components/leaderboard/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { MatchForm } from '@/components/admin/match-form'
 import { formatDate } from '@/lib/utils'
+import { deleteMatch } from '@/actions/admin/matches'
+import { Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function MatchesClient({ rows }: { rows: any[] }) {
+  async function handleDelete(matchId: string) {
+    const result = await deleteMatch(matchId)
+    if (result?.error) {
+      toast.error(result.error)
+      return
+    }
+    toast.success('Match deleted')
+  }
+
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: 'match_code',
@@ -49,7 +62,18 @@ export function MatchesClient({ rows }: { rows: any[] }) {
       id: 'actions',
       cell: ({ row }) => {
         return (
-          <MatchForm match={row.original} mode="edit" />
+          <div className="flex items-center gap-2">
+            <MatchForm match={row.original} mode="edit" />
+            <Button
+              variant="outline"
+              size="icon"
+              className="text-destructive hover:text-destructive"
+              onClick={() => handleDelete(row.original.id)}
+              aria-label={`Delete ${row.original.match_code}`}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
         )
       }
     }

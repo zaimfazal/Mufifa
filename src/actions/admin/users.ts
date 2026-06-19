@@ -3,8 +3,10 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logAuditEvent } from './audit'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from './require-admin'
 
 export async function getUsers(page: number = 1, pageSize: number = 50, search: string = '') {
+  await requireAdmin()
   const supabase = createAdminClient()
   
   let query = supabase
@@ -33,6 +35,7 @@ export async function getUsers(page: number = 1, pageSize: number = 50, search: 
 }
 
 export async function toggleUserStatus(userId: string, currentStatus: boolean) {
+  await requireAdmin()
   const supabase = createAdminClient()
   
   const { error } = await supabase

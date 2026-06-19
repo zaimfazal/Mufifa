@@ -1,4 +1,5 @@
 export interface CsvRow {
+  __requiresChampion?: boolean;
   match_id: string;
   home_team: string;
   away_team: string;

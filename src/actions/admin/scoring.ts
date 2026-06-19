@@ -4,8 +4,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { logAuditEvent } from './audit'
 import { recalculateAll } from '@/lib/scoring/calculator'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from './require-admin'
 
 export async function getScoringRules() {
+  await requireAdmin()
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('scoring_rules').select('*').order('id')
   
@@ -17,6 +19,7 @@ export async function getScoringRules() {
 }
 
 export async function updateScoringRules(formData: FormData) {
+  await requireAdmin()
   const supabase = createAdminClient()
   
   const rulesToUpdate = []
@@ -37,8 +40,6 @@ export async function updateScoringRules(formData: FormData) {
     }
   }
 
-  // Supabase doesn't have an easy batch update for different values without upsert
-  // We can upsert if we select all fields first, or loop
   for (const rule of rulesToUpdate) {
     await supabase
       .from('scoring_rules')

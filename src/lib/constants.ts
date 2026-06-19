@@ -2,12 +2,12 @@ import { TournamentStage } from '@/types/database'
 
 export const TOURNAMENT_STAGES: { value: TournamentStage; label: string; defaultMultiplier: number }[] = [
   { value: 'group_stage', label: 'Group Stage', defaultMultiplier: 1.0 },
-  { value: 'round_of_32', label: 'Round of 32', defaultMultiplier: 1.5 },
-  { value: 'round_of_16', label: 'Round of 16', defaultMultiplier: 2.0 },
-  { value: 'quarter_final', label: 'Quarter Final', defaultMultiplier: 2.5 },
+  { value: 'round_of_32', label: 'Round of 32', defaultMultiplier: 1.2 },
+  { value: 'round_of_16', label: 'Round of 16', defaultMultiplier: 1.5 },
+  { value: 'quarter_final', label: 'Quarter Final', defaultMultiplier: 2.0 },
   { value: 'semi_final', label: 'Semi Final', defaultMultiplier: 3.0 },
-  { value: 'third_place', label: 'Third Place Play-off', defaultMultiplier: 3.0 },
-  { value: 'final', label: 'Final', defaultMultiplier: 4.0 },
+  { value: 'third_place', label: 'Third Place Play-off', defaultMultiplier: 2.5 },
+  { value: 'final', label: 'Final', defaultMultiplier: 5.0 },
 ]
 
 export const CSV_COLUMNS = [
@@ -35,6 +35,31 @@ export const CSV_COLUMNS = [
   'predicted_red_away',
   'confidence',
   'tournament_champion'
+]
+
+export const LEGACY_CSV_COLUMNS = [
+  'match_id',
+  'winner',
+  'home_score',
+  'away_score',
+  'extra_time_home',
+  'extra_time_away',
+  'penalty_home',
+  'penalty_away',
+  'goal_scorers',
+  'goal_counts',
+  'first_goal_scorer',
+  'possession_home',
+  'possession_away',
+  'shots_on_target_home',
+  'shots_on_target_away',
+  'xg_home',
+  'xg_away',
+  'yellow_cards_home',
+  'yellow_cards_away',
+  'red_cards_home',
+  'red_cards_away',
+  'confidence',
 ]
 
 export const MATCH_ID_PATTERN = /^(GS|R32|R16|QF|SF|TP|F)_[0-9]{3}$/

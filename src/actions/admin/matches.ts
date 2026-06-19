@@ -3,8 +3,10 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logAuditEvent } from './audit'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from './require-admin'
 
 export async function getMatches(stage?: string, status?: string) {
+  await requireAdmin()
   const supabase = createAdminClient()
   let query = supabase.from('matches').select('*').order('kickoff_time')
   
@@ -17,6 +19,7 @@ export async function getMatches(stage?: string, status?: string) {
 }
 
 export async function createMatch(formData: FormData) {
+  await requireAdmin()
   const supabase = createAdminClient()
   
   const matchCode = formData.get('match_code') as string
@@ -44,6 +47,7 @@ export async function createMatch(formData: FormData) {
 }
 
 export async function updateMatch(matchId: string, formData: FormData) {
+  await requireAdmin()
   const supabase = createAdminClient()
   
   const stage = formData.get('stage') as string
@@ -66,6 +70,22 @@ export async function updateMatch(matchId: string, formData: FormData) {
   if (error) return { error: error.message }
 
   await logAuditEvent('update_match', 'matches', matchId, { status })
+  revalidatePath('/admin/matches')
+  return { success: true }
+}
+
+export async function deleteMatch(matchId: string) {
+  await requireAdmin()
+  const supabase = createAdminClient()
+
+  const { error } = await supabase
+    .from('matches')
+    .delete()
+    .eq('id', matchId)
+
+  if (error) return { error: error.message }
+
+  await logAuditEvent('delete_match', 'matches', matchId)
   revalidatePath('/admin/matches')
   return { success: true }
 }

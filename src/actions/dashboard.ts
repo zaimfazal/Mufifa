@@ -32,8 +32,6 @@ export async function getDashboardPredictions(teamId: string) {
       actual_winner: actual?.winner || null,
       actual_home_score: actual?.home_score ?? null,
       actual_away_score: actual?.away_score ?? null,
-      // For a real app, we'd also pull the computed score for this specific match.
-      // But since score is aggregated in the leaderboard, we might just display "Pending" or simulate it here.
     }
   })
 }

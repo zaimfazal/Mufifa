@@ -4,8 +4,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { logAuditEvent } from './audit'
 import { recalculateForMatch } from '@/lib/scoring/calculator'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from './require-admin'
 
 export async function enterResult(matchId: string, formData: FormData) {
+  const adminUser = await requireAdmin()
   const supabase = createAdminClient()
   
   // Extract all data from formData
@@ -43,9 +45,6 @@ export async function enterResult(matchId: string, formData: FormData) {
   const firstGoalScorerRaw = formData.get('first_goal_scorer') as string
   const firstGoalScorer = firstGoalScorerRaw ? firstGoalScorerRaw.trim() : null
 
-  // Fetch admin user for updated_by
-  const { data: { user } } = await supabase.auth.getUser()
-
   const { error } = await supabase.from('actual_results').upsert({
     match_id: matchId,
     winner,
@@ -65,7 +64,7 @@ export async function enterResult(matchId: string, formData: FormData) {
     penalty_away: penaltyAway,
     goal_scorers: goalScorers,
     first_goal_scorer: firstGoalScorer,
-    updated_by: user?.id,
+    updated_by: adminUser.id,
     updated_at: new Date().toISOString()
   }, { onConflict: 'match_id' })
 

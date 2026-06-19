@@ -1,6 +1,12 @@
 import { z } from 'zod'
-import { CsvRow, ParsedPrediction, ValidationResult } from '@/types/predictions'
+import { CsvRow, ValidationError, ValidationResult } from '@/types/predictions'
 import { parseGoalScorers } from './parser'
+
+type MatchReference = {
+  match_code: string
+  home_team: string
+  away_team: string
+}
 
 const predictionRowSchema = z.object({
   match_id: z.string().min(1, "Match ID is required"),
@@ -24,9 +30,85 @@ const predictionRowSchema = z.object({
   confidence: z.string().regex(/^(100|[1-9]?[0-9])$/, "Confidence must be between 0 and 100"),
 })
 
+const PLAYER_NAME_PATTERN = /^[A-Za-z .'-]+$/
+
+function normalizedText(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function getMatchReference(validMatches: string[] | MatchReference[], matchId: string) {
+  if (validMatches.length === 0 || typeof validMatches[0] === 'string') return null
+  return (validMatches as MatchReference[]).find(match => match.match_code === matchId) || null
+}
+
+function getValidMatchIds(validMatches: string[] | MatchReference[]) {
+  if (validMatches.length === 0 || typeof validMatches[0] === 'string') {
+    return validMatches as string[]
+  }
+  return (validMatches as MatchReference[]).map(match => match.match_code)
+}
+
+function validateTeamName(row: CsvRow, rowNumber: number, matchRef: MatchReference | null): ValidationError[] {
+  const homeTeam = matchRef?.home_team || row.home_team
+  const awayTeam = matchRef?.away_team || row.away_team
+
+  if (!homeTeam || !awayTeam || normalizedText(row.predicted_winner) === 'draw') {
+    return []
+  }
+
+  const winner = normalizedText(row.predicted_winner)
+  const home = normalizedText(homeTeam)
+  const away = normalizedText(awayTeam)
+
+  if (winner === home || winner === away) return []
+
+  return [{
+    row: rowNumber,
+    column: 'predicted_winner',
+    message: `Predicted winner must be ${homeTeam}, ${awayTeam}, or draw`
+  }]
+}
+
+function validatePlayerNames(row: CsvRow, rowNumber: number): ValidationError[] {
+  const errors: ValidationError[] = []
+  const scorerParts = row.predicted_goal_scorers
+    ? row.predicted_goal_scorers.split(';').filter(Boolean)
+    : []
+
+  scorerParts.forEach((part) => {
+    const [name, count] = part.split(':').map(value => value?.trim())
+    if (!name || !count || !/^[1-9]\d*$/.test(count)) {
+      errors.push({
+        row: rowNumber,
+        column: 'predicted_goal_scorers',
+        message: `Goal scorer must use Name:Goals format. Invalid value: ${part}`
+      })
+      return
+    }
+
+    if (!PLAYER_NAME_PATTERN.test(name)) {
+      errors.push({
+        row: rowNumber,
+        column: 'predicted_goal_scorers',
+        message: `Invalid player name: ${name}`
+      })
+    }
+  })
+
+  if (row.predicted_first_goal_scorer && !PLAYER_NAME_PATTERN.test(row.predicted_first_goal_scorer)) {
+    errors.push({
+      row: rowNumber,
+      column: 'predicted_first_goal_scorer',
+      message: `Invalid first goal scorer: ${row.predicted_first_goal_scorer}`
+    })
+  }
+
+  return errors
+}
+
 export function validateCsv(
   rows: CsvRow[], 
-  validMatchIds: string[]
+  validMatches: string[] | MatchReference[]
 ): ValidationResult {
   const result: ValidationResult = {
     valid: true,
@@ -36,12 +118,28 @@ export function validateCsv(
   }
 
   const seenMatches = new Set<string>()
+  const validMatchIds = getValidMatchIds(validMatches)
+  const validTeams = new Set<string>()
+  if (validMatches.length > 0 && typeof validMatches[0] !== 'string') {
+    ;(validMatches as MatchReference[]).forEach(match => {
+      validTeams.add(normalizedText(match.home_team))
+      validTeams.add(normalizedText(match.away_team))
+    })
+  }
 
   // Assume the first row contains the champion prediction for simplicity, 
   // or that it's consistent across rows. We'll take the first valid one.
   if (rows.length > 0 && rows[0].tournament_champion) {
     result.champion = rows[0].tournament_champion.trim()
-  } else {
+    if (validTeams.size > 0 && !validTeams.has(normalizedText(result.champion))) {
+      result.valid = false
+      result.errors.push({
+        row: 1,
+        column: 'tournament_champion',
+        message: `Tournament champion must be one of the tournament teams`
+      })
+    }
+  } else if (rows[0]?.__requiresChampion) {
     result.valid = false
     result.errors.push({
       row: 1,
@@ -65,6 +163,14 @@ export function validateCsv(
         })
       })
       return // Skip further validation for this row if base fails
+    }
+
+    const matchRef = getMatchReference(validMatches, row.match_id)
+    const teamErrors = validateTeamName(row, rowNumber, matchRef)
+    const playerErrors = validatePlayerNames(row, rowNumber)
+    if (teamErrors.length > 0 || playerErrors.length > 0) {
+      result.valid = false
+      result.errors.push(...teamErrors, ...playerErrors)
     }
 
     // Match ID validation
