@@ -8,9 +8,7 @@ export async function signUp(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const supabase = await createClient()
-
-  const origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-
+  const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://mufifa-gules.vercel.app'
   const { error } = await supabase.auth.signUp({
     email,
     password,
