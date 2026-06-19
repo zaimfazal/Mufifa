@@ -49,23 +49,23 @@ export default async function Home(props: { searchParams?: SearchParams }) {
             </h3>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               {user ? (
-                <Button asChild size="lg" className="w-full sm:w-auto px-8 text-base h-12 shadow-lg hover:shadow-primary/25 transition-all">
-                  <Link href="/dashboard">
+                <Link href="/dashboard">
+                  <Button size="lg" className="w-full sm:w-auto px-8 text-base h-12 shadow-lg hover:shadow-primary/25 transition-all">
                     Go to Dashboard <ChevronRight className="ml-2 w-5 h-5" />
-                  </Link>
-                </Button>
+                  </Button>
+                </Link>
               ) : (
                 <>
-                  <Button asChild size="lg" className="w-full sm:w-auto px-8 text-base h-12 shadow-lg hover:shadow-primary/25 transition-all">
-                    <Link href="/register">
+                  <Link href="/register">
+                    <Button size="lg" className="w-full sm:w-auto px-8 text-base h-12 shadow-lg hover:shadow-primary/25 transition-all">
                       Register Now
-                    </Link>
-                  </Button>
-                  <Button asChild size="lg" variant="outline" className="w-full sm:w-auto px-8 text-base h-12">
-                    <Link href="/leaderboard">
+                    </Button>
+                  </Link>
+                  <Link href="/leaderboard">
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 text-base h-12">
                       View Leaderboard
-                    </Link>
-                  </Button>
+                    </Button>
+                  </Link>
                 </>
               )}
             </div>
@@ -446,21 +446,21 @@ export default async function Home(props: { searchParams?: SearchParams }) {
           </div>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
-            <Button asChild size="lg" variant="secondary" className="w-full sm:w-auto px-8 h-14 text-base font-bold shadow-lg">
-              <Link href="/register">
+            <Link href="/register">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto px-8 h-14 text-base font-bold shadow-lg">
                 Register Now
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="w-full sm:w-auto px-8 h-14 text-base bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
-              <Link href="/submit">
+              </Button>
+            </Link>
+            <Link href="/submit">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 h-14 text-base bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
                 <Download className="mr-2 w-5 h-5" /> Download Template
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="w-full sm:w-auto px-8 h-14 text-base bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
-              <Link href="/leaderboard">
+              </Button>
+            </Link>
+            <Link href="/leaderboard">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 h-14 text-base bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
                 <Trophy className="mr-2 w-5 h-5" /> View Leaderboard
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </div>
 
           <div className="border-t border-primary-foreground/20 mt-16 pt-16 flex flex-col items-center space-y-4">
