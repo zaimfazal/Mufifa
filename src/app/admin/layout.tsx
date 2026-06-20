@@ -38,6 +38,7 @@ export default async function AdminLayout({
               { name: 'Results', href: '/admin/results' },
               { name: 'Scoring', href: '/admin/scoring' },
               { name: 'Users', href: '/admin/users' },
+              { name: 'Settings', href: '/admin/settings' },
               { name: 'Logs', href: '/admin/logs' },
             ].map((item) => (
               <a key={item.href} href={item.href} className="text-xs font-semibold text-muted-foreground hover:text-accent px-3 py-1.5 rounded-full border border-border/50 whitespace-nowrap transition-colors">

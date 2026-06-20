@@ -17,6 +17,7 @@ const navItems = [
   { name: 'Matches', href: '/admin/matches', icon: CalendarDays },
   { name: 'Enter Results', href: '/admin/results', icon: CheckSquare },
   { name: 'Scoring Rules', href: '/admin/scoring', icon: Settings2 },
+  { name: 'Global Settings', href: '/admin/settings', icon: Settings2 },
   { name: 'Manage Users', href: '/admin/users', icon: Users },
   { name: 'Audit Logs', href: '/admin/logs', icon: ScrollText },
 ]

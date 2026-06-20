@@ -4,6 +4,7 @@ import { StatsCards } from '@/components/dashboard/stats-cards'
 import { ScoreBreakdown } from '@/components/dashboard/score-breakdown'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
 import { MatchPredictionsTable } from '@/components/dashboard/match-predictions-table'
+import { Badge } from '@/components/ui/badge'
 import { EditTeamName } from '@/components/dashboard/edit-team-name'
 import { getDashboardPredictions } from '@/actions/dashboard'
 import { Metadata } from 'next'
@@ -46,6 +47,9 @@ export default async function DashboardPage() {
 
   const predictions = await getDashboardPredictions(team.id)
 
+  const { data: settings } = await supabase.from('competition_settings').select('submission_deadline').single()
+  const isClosed = settings?.submission_deadline ? new Date() > new Date(settings.submission_deadline) : false
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -54,6 +58,16 @@ export default async function DashboardPage() {
           <p className="text-muted-foreground mt-1 text-lg">
             Dashboard overview and prediction statistics.
           </p>
+          <div className="mt-4 flex items-center gap-2">
+            <Badge variant={isClosed ? "destructive" : "default"} className={isClosed ? "" : "bg-primary text-primary-foreground hover:bg-primary/80"}>
+              Submission Window: {isClosed ? 'CLOSED' : 'OPEN'}
+            </Badge>
+            {settings?.submission_deadline && !isClosed && (
+              <span className="text-xs text-muted-foreground">
+                Closes: {new Date(settings.submission_deadline).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+              </span>
+            )}
+          </div>
         </div>
         <div className="text-right glass-panel px-6 py-3 rounded-2xl border-accent/20 border">
           <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-1">Global Rank</p>

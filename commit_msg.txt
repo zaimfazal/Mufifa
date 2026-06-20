@@ -1,0 +1,9 @@
+feat: production launch preparation
+
+Include:
+* competition_settings implementation
+* submission deadline enforcement
+* admin settings page
+* homepage deadline display
+* dashboard submission status
+* round of 32 dataset support

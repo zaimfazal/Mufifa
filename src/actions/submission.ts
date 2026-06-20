@@ -41,6 +41,18 @@ export async function uploadSubmission(formData: FormData) {
   if (!team) return { error: 'No team found. Please create a team first.' }
   if (team.submission_locked) return { error: 'Your submission is already locked.' }
 
+  // Check global submission deadline
+  const { data: settings } = await supabase
+    .from('competition_settings')
+    .select('submission_deadline')
+    .single()
+
+  if (settings?.submission_deadline) {
+    if (new Date() > new Date(settings.submission_deadline)) {
+      return { error: 'Submissions are closed. The prediction window ended when the Round of 32 began.' }
+    }
+  }
+
   const text = await file.text()
   
   // Parse

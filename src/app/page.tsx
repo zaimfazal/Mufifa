@@ -24,6 +24,9 @@ export default async function Home(props: { searchParams?: SearchParams }) {
     team = data
   }
 
+  const { data: settings } = await supabase.from('competition_settings').select('submission_deadline').single()
+  const isClosed = settings?.submission_deadline ? new Date() > new Date(settings.submission_deadline) : false
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/20">
       
@@ -51,7 +54,11 @@ export default async function Home(props: { searchParams?: SearchParams }) {
           <div className="pt-8">
             <h3 className="text-xl font-bold mb-6 flex items-center justify-center gap-2">
               <Activity className="w-5 h-5 text-primary animate-pulse" />
-              Competition Starts Soon: Predict the future of football.
+              {isClosed 
+                ? "Submissions Closed: The tournament is officially underway." 
+                : settings?.submission_deadline 
+                  ? `Submission Deadline: ${new Date(settings.submission_deadline).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}` 
+                  : "Competition Starts Soon: Predict the future of football."}
             </h3>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               {user ? (
@@ -95,6 +102,24 @@ export default async function Home(props: { searchParams?: SearchParams }) {
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Organized as part of the <span className="font-semibold text-foreground">MuLearn Hackathon ecosystem</span>. Unlike traditional fantasy leagues, this competition evaluates the performance of machine learning models using a structured scoring framework designed to reward both accuracy and statistical insight.
             </p>
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 mt-8 max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-left shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-full shrink-0">
+                  <BrainCircuit className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg mb-1 text-foreground">Earn MuLearn Karma Points</h4>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Participants who submit their machine learning notebook and prediction methodology in the MuLearn Discord community will receive MuLearn Karma Points.
+                  </p>
+                </div>
+              </div>
+              <Button asChild className="shrink-0 shadow-sm">
+                <Link href="https://mulearn.org/" target="_blank" rel="noopener noreferrer">
+                  Join MuLearn
+                </Link>
+              </Button>
+            </div>
           </div>
 
           <Card className="bg-muted/30 border-primary/10 shadow-sm">
