@@ -186,21 +186,39 @@ export function calculateConfidenceScore(prediction: Prediction, actual: Actual,
   }
 }
 
-export function calculateMaxPossibleScore(rules: Record<string, ScoringRule>, multiplier: number, hasPenalties: boolean): number {
+export function calculateMaxPossibleScore(rules: Record<string, ScoringRule>, multiplier: number, actual: Actual): number {
   let max = 0
+  const hasPenalties = actual.penalty_home !== null || actual.penalty_away !== null
   
   // Best outcome
   max += Math.max(rules['correct_winner']?.points || 0, rules['correct_draw']?.points || 0)
   // Best scoreline
   max += rules['exact_scoreline']?.points || 0
-  // Best scorer (assumes 1 scorer for max, simplified max possible calculation)
-  max += (rules['correct_scorer']?.points || 0) + (rules['correct_goal_count']?.points || 0) + (rules['exact_scorer_list']?.points || 0) + (rules['first_goal_scorer']?.points || 0)
+  
+  // Best scorer dynamically calculated based on actual match scorers
+  const actualScorers = actual.goal_scorers 
+    ? (actual.goal_scorers as GoalScorer[]).filter(s => !s.name.toLowerCase().includes('own goal') && s.name.toLowerCase() !== 'og') 
+    : []
+  
+  if (actualScorers.length > 0) {
+    const scorerCount = actualScorers.length
+    max += scorerCount * (rules['correct_scorer']?.points || 0)
+    max += scorerCount * (rules['correct_goal_count']?.points || 0)
+    max += rules['exact_scorer_list']?.points || 0
+  }
+  
+  if (actual.first_goal_scorer) {
+    max += rules['first_goal_scorer']?.points || 0
+  }
+
   // Best stats
   max += (rules['possession_accuracy']?.points || 0) + (rules['shots_accuracy']?.points || 0) + (rules['xg_accuracy']?.points || 0) + (rules['yellow_cards_accuracy']?.points || 0) + (rules['red_cards_exact']?.points || 0)
+  
   // Penalties
   if (hasPenalties) {
     max += (rules['penalty_winner']?.points || 0) + (rules['penalty_score']?.points || 0)
   }
+  
   // Confidence
   max += rules['confidence_bonus']?.points || 0
   
@@ -217,8 +235,7 @@ export function calculateMatchScore(prediction: Prediction, actual: Actual, rule
 
   const unmultipliedTotal = outcome + scoreline + scorer + stats + penalty + confidence
   const multipliedTotal = unmultipliedTotal * multiplier
-  const hasPenalties = actual.penalty_home !== null || actual.penalty_away !== null
-  const maxPossible = calculateMaxPossibleScore(rules, multiplier, hasPenalties)
+  const maxPossible = calculateMaxPossibleScore(rules, multiplier, actual)
 
   return {
     total: unmultipliedTotal,

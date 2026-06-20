@@ -1,15 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect } from 'vitest'
-import { calculateOutcomeScore, calculateScorelineScore, calculateScorerScore, calculateStatsScore, calculatePenaltyScore, calculateConfidenceScore, calculateMatchScore } from '../lib/scoring/engine'
+import { calculateOutcomeScore, calculateScorelineScore, calculateConfidenceScore, calculateMatchScore } from '../lib/scoring/engine'
 import { ScoringRule } from '@/types/scoring'
 
 const mockRules: Record<string, ScoringRule> = {
-  correct_winner: { id: '1', rule_key: 'correct_winner', rule_name: 'Winner', points: 20, is_enabled: true, updated_at: '' },
-  correct_draw: { id: '2', rule_key: 'correct_draw', rule_name: 'Draw', points: 20, is_enabled: true, updated_at: '' },
-  exact_scoreline: { id: '3', rule_key: 'exact_scoreline', rule_name: 'Exact Score', points: 40, is_enabled: true, updated_at: '' },
-  correct_goal_difference: { id: '4', rule_key: 'correct_goal_difference', rule_name: 'Goal Diff', points: 15, is_enabled: true, updated_at: '' },
-  one_team_score_correct: { id: '5', rule_key: 'one_team_score_correct', rule_name: 'One Team', points: 10, is_enabled: true, updated_at: '' },
-  confidence_bonus: { id: '6', rule_key: 'confidence_bonus', rule_name: 'Conf Bonus', points: 10, is_enabled: true, updated_at: '' },
-  confidence_penalty: { id: '7', rule_key: 'confidence_penalty', rule_name: 'Conf Penalty', points: -10, is_enabled: true, updated_at: '' }
+  correct_winner: { rule_key: 'correct_winner', rule_name: 'Winner', points: 20, is_enabled: true },
+  correct_draw: { rule_key: 'correct_draw', rule_name: 'Draw', points: 20, is_enabled: true },
+  exact_scoreline: { rule_key: 'exact_scoreline', rule_name: 'Exact Score', points: 40, is_enabled: true },
+  correct_goal_difference: { rule_key: 'correct_goal_difference', rule_name: 'Goal Diff', points: 15, is_enabled: true },
+  one_team_score_correct: { rule_key: 'one_team_score_correct', rule_name: 'One Team', points: 10, is_enabled: true },
+  confidence_bonus: { rule_key: 'confidence_bonus', rule_name: 'Conf Bonus', points: 10, is_enabled: true },
+  confidence_penalty: { rule_key: 'confidence_penalty', rule_name: 'Conf Penalty', points: -10, is_enabled: true }
 }
 
 describe('Scoring Engine (Acceptance Tests)', () => {

@@ -6,6 +6,7 @@ import { validateCsv } from '@/lib/csv/validator'
 import { generateTemplate } from '@/lib/csv/template-generator'
 import { revalidatePath } from 'next/cache'
 import { globalRateLimiter } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
 export async function uploadSubmission(formData: FormData) {
   const file = formData.get('file') as File
@@ -25,7 +26,7 @@ export async function uploadSubmission(formData: FormData) {
   if (!user) return { error: 'Not authenticated' }
 
   // Rate limiting: max 5 requests per 1 minute per user
-  const { success } = globalRateLimiter.check(`upload_${user.id}`, 5, 60 * 1000)
+  const { success } = await globalRateLimiter.check(`upload_${user.id}`, 5, 60 * 1000)
   if (!success) {
     return { error: 'Too many upload attempts. Please try again later.' }
   }
@@ -75,7 +76,10 @@ export async function uploadSubmission(formData: FormData) {
     .from('prediction-files')
     .upload(filePath, file)
 
-  if (uploadError) return { error: 'Failed to upload file to storage' }
+  if (uploadError) {
+    logger.error({ err: uploadError }, 'Unhandled upload submission error:')
+    return { error: 'Failed to upload file to storage' }
+  }
 
   // Transaction-like insert for predictions
   // Note: Supabase JS client doesn't have true transactions unless via RPC,
@@ -118,7 +122,10 @@ export async function uploadSubmission(formData: FormData) {
     p_predictions: predictions
   })
 
-  if (rpcError) return { error: 'Failed to save predictions: ' + rpcError.message }
+  if (rpcError) {
+    logger.error({ err: rpcError }, 'RPC submission error:')
+    return { error: 'Failed to save predictions: ' + rpcError.message }
+  }
 
   // Log audit
   await supabase.from('audit_logs').insert({
@@ -187,7 +194,7 @@ export async function createTeam(formData: FormData) {
   if (!user) return { error: 'Not authenticated' }
 
   // Rate limiting: max 3 requests per 5 minutes per user
-  const { success } = globalRateLimiter.check(`createTeam_${user.id}`, 3, 5 * 60 * 1000)
+  const { success } = await globalRateLimiter.check(`createTeam_${user.id}`, 3, 5 * 60 * 1000)
   if (!success) {
     return { error: 'Too many team creation attempts. Please try again later.' }
   }

@@ -1,8 +1,17 @@
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
+
 export class RateLimit {
-  private cache: Map<string, { count: number; expiresAt: number }>
+  private redis: Redis | null = null
+  private limiters: Map<string, Ratelimit> = new Map()
 
   constructor() {
-    this.cache = new Map()
+    const url = process.env.UPSTASH_REDIS_REST_URL
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN
+
+    if (url && token) {
+      this.redis = new Redis({ url, token })
+    }
   }
 
   /**
@@ -12,33 +21,31 @@ export class RateLimit {
    * @param windowMs Window duration in milliseconds.
    * @returns An object with `success` true if allowed, false if limited.
    */
-  public check(key: string, limit: number, windowMs: number): { success: boolean; remaining: number } {
-    const now = Date.now()
-    const record = this.cache.get(key)
-
-    if (!record || record.expiresAt < now) {
-      // First request or window expired
-      this.cache.set(key, { count: 1, expiresAt: now + windowMs })
-      
-      // Cleanup expired entries periodically
-      if (Math.random() < 0.1) this.cleanup(now)
-      
-      return { success: true, remaining: limit - 1 }
+  public async check(key: string, limit: number, windowMs: number): Promise<{ success: boolean; remaining: number }> {
+    if (!this.redis) {
+      console.warn('[RateLimit] Missing UPSTASH_REDIS_REST_URL. Rate limiting is gracefully disabled.')
+      return { success: true, remaining: limit }
     }
 
-    if (record.count >= limit) {
-      return { success: false, remaining: 0 }
+    const windowSecs = Math.max(1, Math.floor(windowMs / 1000))
+    const configKey = `${limit}_${windowSecs}s`
+
+    let limiter = this.limiters.get(configKey)
+    if (!limiter) {
+      limiter = new Ratelimit({
+        redis: this.redis,
+        limiter: Ratelimit.slidingWindow(limit, `${windowSecs} s` as any),
+        ephemeralCache: new Map(),
+      })
+      this.limiters.set(configKey, limiter)
     }
 
-    record.count += 1
-    return { success: true, remaining: limit - record.count }
-  }
-
-  private cleanup(now: number) {
-    for (const [k, v] of this.cache.entries()) {
-      if (v.expiresAt < now) {
-        this.cache.delete(k)
-      }
+    try {
+      const res = await limiter.limit(key)
+      return { success: res.success, remaining: res.remaining }
+    } catch (error) {
+      console.error('[RateLimit] Redis error, failing open:', error)
+      return { success: true, remaining: limit }
     }
   }
 }
