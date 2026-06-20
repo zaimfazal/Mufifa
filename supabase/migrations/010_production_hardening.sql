@@ -54,7 +54,7 @@ BEGIN
   )
   SELECT 
     p_team_id, 
-    (SELECT id FROM matches WHERE match_code = (p->>'match_id')),
+    (p->>'match_id')::UUID,
     p->>'winner',
     (p->>'home_score')::INTEGER,
     (p->>'away_score')::INTEGER,
