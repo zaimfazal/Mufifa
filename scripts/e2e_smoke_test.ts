@@ -141,6 +141,8 @@ async function runTest() {
     .in('team_id', teams.map(t => t.id))
     .order('total_score', { ascending: false })
 
+  if (!lb) throw new Error('Leaderboard is null')
+
   lb.forEach((l: any, index: number) => {
     console.log(`   -> Rank ${l.rank} (Global) | Score: ${l.total_score} | Team: ${(l.teams as any).team_name}`)
   })
@@ -148,6 +150,8 @@ async function runTest() {
   const p1 = lb.find((l: any) => l.team_id === teams[0].id)
   const p2 = lb.find((l: any) => l.team_id === teams[1].id)
   const p3 = lb.find((l: any) => l.team_id === teams[2].id)
+
+  if (!p1 || !p2 || !p3) throw new Error('Missing leaderboard entry')
 
   let passed = true
   if (p1.total_score <= p2.total_score || p2.total_score <= p3.total_score) {
