@@ -17,6 +17,12 @@ export default async function Home(props: { searchParams?: SearchParams }) {
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  
+  let team = null
+  if (user) {
+    const { data } = await supabase.from('teams').select('*').eq('owner_id', user.id).single()
+    team = data
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/20">
@@ -49,11 +55,19 @@ export default async function Home(props: { searchParams?: SearchParams }) {
             </h3>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               {user ? (
-                <Link href="/dashboard">
-                  <Button size="lg" className="w-full sm:w-auto px-8 text-base h-12 shadow-lg hover:shadow-primary/25 transition-all">
-                    Go to Dashboard <ChevronRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
+                team ? (
+                  <Link href="/dashboard">
+                    <Button size="lg" className="w-full sm:w-auto px-8 text-base h-12 shadow-lg hover:shadow-primary/25 transition-all">
+                      Go to Dashboard <ChevronRight className="ml-2 w-5 h-5" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/submit">
+                    <Button size="lg" className="w-full sm:w-auto px-8 text-base h-12 shadow-lg hover:shadow-primary/25 transition-all">
+                      Register for Competition <ChevronRight className="ml-2 w-5 h-5" />
+                    </Button>
+                  </Link>
+                )
               ) : (
                 <>
                   <Link href="/register">
@@ -446,11 +460,13 @@ export default async function Home(props: { searchParams?: SearchParams }) {
           </div>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
-            <Link href="/register">
-              <Button size="lg" variant="secondary" className="w-full sm:w-auto px-8 h-14 text-base font-bold shadow-lg">
-                Register Now
-              </Button>
-            </Link>
+            {!user && (
+              <Link href="/register">
+                <Button size="lg" variant="secondary" className="w-full sm:w-auto px-8 h-14 text-base font-bold shadow-lg">
+                  Register Now
+                </Button>
+              </Link>
+            )}
             <Link href="/submit">
               <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 h-14 text-base bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
                 <Download className="mr-2 w-5 h-5" /> Download Template

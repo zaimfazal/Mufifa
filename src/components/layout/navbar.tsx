@@ -1,18 +1,21 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Trophy, LayoutDashboard, UploadCloud, ShieldAlert, LogOut } from 'lucide-react'
+import { Trophy, LayoutDashboard, UploadCloud, ShieldAlert, LogOut, Menu } from 'lucide-react'
 import { signOut } from '@/actions/auth'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 
 export async function Navbar() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  
   let isAdmin = false
+  let isLocked = false
   if (user) {
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
     isAdmin = profile?.role === 'admin'
+    const { data: team } = await supabase.from('teams').select('submission_locked').eq('owner_id', user.id).single()
+    isLocked = team?.submission_locked || false
   }
 
   return (
@@ -34,9 +37,11 @@ export async function Navbar() {
               <Link href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-accent transition-colors flex items-center">
                 <LayoutDashboard className="w-4 h-4 mr-1" /> Dashboard
               </Link>
-              <Link href="/submit" className="text-sm font-medium text-muted-foreground hover:text-accent transition-colors flex items-center">
-                <UploadCloud className="w-4 h-4 mr-1" /> Submit
-              </Link>
+              {!isLocked && (
+                <Link href="/submit" className="text-sm font-medium text-muted-foreground hover:text-accent transition-colors flex items-center">
+                  <UploadCloud className="w-4 h-4 mr-1" /> Submit
+                </Link>
+              )}
               {isAdmin && (
                 <Link href="/admin" className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors flex items-center">
                   <ShieldAlert className="w-4 h-4 mr-1" /> Admin
@@ -67,6 +72,67 @@ export async function Navbar() {
               </Link>
             </>
           )}
+        </div>
+
+        {/* Mobile menu */}
+        <div className="md:hidden flex items-center gap-2">
+          <ThemeToggle />
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="flex flex-col gap-4">
+              <Link href="/" className="flex items-center space-x-2 mb-8">
+                <div className="w-8 h-8 rounded bg-accent flex items-center justify-center neon-box-green">
+                  <span className="font-bold text-background">µ</span>
+                </div>
+                <span className="font-extrabold tracking-tight text-xl text-foreground">Fifa &apos;26</span>
+              </Link>
+              
+              <Link href="/leaderboard" className="text-sm font-medium text-foreground hover:text-accent transition-colors flex items-center">
+                <Trophy className="w-4 h-4 mr-2" /> Leaderboard
+              </Link>
+              
+              {user && (
+                <>
+                  <Link href="/dashboard" className="text-sm font-medium text-foreground hover:text-accent transition-colors flex items-center">
+                    <LayoutDashboard className="w-4 h-4 mr-2" /> Dashboard
+                  </Link>
+                  {!isLocked && (
+                    <Link href="/submit" className="text-sm font-medium text-foreground hover:text-accent transition-colors flex items-center">
+                      <UploadCloud className="w-4 h-4 mr-2" /> Submit
+                    </Link>
+                  )}
+                  {isAdmin && (
+                    <Link href="/admin" className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors flex items-center">
+                      <ShieldAlert className="w-4 h-4 mr-2" /> Admin
+                    </Link>
+                  )}
+                  <form action={signOut} className="mt-auto">
+                    <Button type="submit" variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </form>
+                </>
+              )}
+              
+              {!user && (
+                <div className="flex flex-col gap-2 mt-auto">
+                  <Link href="/login" className="w-full">
+                    <Button variant="outline" className="w-full">Login</Button>
+                  </Link>
+                  <Link href="/register" className="w-full">
+                    <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 neon-border-green">
+                      Register
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </nav>

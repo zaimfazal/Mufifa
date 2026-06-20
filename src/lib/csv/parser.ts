@@ -84,7 +84,7 @@ export function parseCsvText(text: string): { rows: CsvRow[]; errors: string[] }
   const result = Papa.parse(text, {
     header: true,
     skipEmptyLines: true,
-    transformHeader: (header) => header.trim(),
+    transformHeader: (header) => header.replace(/^\uFEFF/, '').trim(),
   })
 
   const errors: string[] = []

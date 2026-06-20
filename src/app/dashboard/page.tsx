@@ -2,8 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { StatsCards } from '@/components/dashboard/stats-cards'
 import { ScoreBreakdown } from '@/components/dashboard/score-breakdown'
-import { RecentActivity } from '@/components/dashboard/recent-activity'
 import { MatchPredictionsTable } from '@/components/dashboard/match-predictions-table'
+import { EditTeamName } from '@/components/dashboard/edit-team-name'
 import { getDashboardPredictions } from '@/actions/dashboard'
 import { Metadata } from 'next'
 
@@ -49,9 +49,7 @@ export default async function DashboardPage() {
     <div className="container mx-auto px-4 py-8 space-y-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary">
-            {team.team_name}
-          </h1>
+          <EditTeamName initialName={team.team_name} />
           <p className="text-muted-foreground mt-1 text-lg">
             Dashboard overview and prediction statistics.
           </p>

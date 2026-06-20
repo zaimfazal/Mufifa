@@ -48,7 +48,7 @@ function getValidMatchIds(validMatches: string[] | MatchReference[]) {
   return (validMatches as MatchReference[]).map(match => match.match_code)
 }
 
-function validateTeamName(row: CsvRow, rowNumber: number, matchRef: MatchReference | null): ValidationError[] {
+function validateTeamName(row: CsvRow, rowNumber: number, matchRef: MatchReference | null, validTeams: Set<string>): ValidationError[] {
   const homeTeam = matchRef?.home_team || row.home_team
   const awayTeam = matchRef?.away_team || row.away_team
 
@@ -61,6 +61,7 @@ function validateTeamName(row: CsvRow, rowNumber: number, matchRef: MatchReferen
   const away = normalizedText(awayTeam)
 
   if (winner === home || winner === away) return []
+  if ((home === 'tbd' || away === 'tbd') && (validTeams.size === 0 || validTeams.has(winner))) return []
 
   return [{
     row: rowNumber,
@@ -127,24 +128,24 @@ export function validateCsv(
     })
   }
 
-  // Assume the first row contains the champion prediction for simplicity, 
-  // or that it's consistent across rows. We'll take the first valid one.
-  if (rows.length > 0 && rows[0].tournament_champion) {
-    result.champion = rows[0].tournament_champion.trim()
+  // Look for champion in any row
+  const championRow = rows.find(r => r.tournament_champion?.trim())
+  if (championRow) {
+    result.champion = championRow.tournament_champion.trim()
     if (validTeams.size > 0 && !validTeams.has(normalizedText(result.champion))) {
       result.valid = false
       result.errors.push({
-        row: 1,
+        row: rows.indexOf(championRow) + 2,
         column: 'tournament_champion',
         message: `Tournament champion must be one of the tournament teams`
       })
     }
-  } else if (rows[0]?.__requiresChampion) {
+  } else if (rows.length > 0 && rows[0].__requiresChampion) {
     result.valid = false
     result.errors.push({
-      row: 1,
+      row: 0,
       column: 'tournament_champion',
-      message: 'Tournament champion prediction is missing in the first row'
+      message: 'Tournament champion prediction is missing in the file'
     })
   }
 
@@ -166,7 +167,7 @@ export function validateCsv(
     }
 
     const matchRef = getMatchReference(validMatches, row.match_id)
-    const teamErrors = validateTeamName(row, rowNumber, matchRef)
+    const teamErrors = validateTeamName(row, rowNumber, matchRef, validTeams)
     const playerErrors = validatePlayerNames(row, rowNumber)
     if (teamErrors.length > 0 || playerErrors.length > 0) {
       result.valid = false

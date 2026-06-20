@@ -2,6 +2,28 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+
+export async function updateTeamName(formData: FormData) {
+  const teamName = formData.get('team_name') as string
+  if (!teamName || teamName.length < 3) return { error: 'Team name must be at least 3 characters' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase.from('teams').update({ team_name: teamName }).eq('owner_id', user.id)
+
+  if (error) {
+    if (error.code === '23505') {
+      return { error: 'This team name is already taken.' }
+    }
+    return { error: error.message }
+  }
+
+  revalidatePath('/dashboard')
+  return { success: true }
+}
 
 export async function getDashboardPredictions(teamId: string) {
   const supabase = await createClient()
