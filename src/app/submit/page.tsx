@@ -30,7 +30,7 @@ export default async function SubmitPage() {
           Submission Portal
         </h1>
         <p className="text-muted-foreground">
-          Upload your ML predictions for all tournament matches.
+          Upload your ML predictions for all knockout stage matches.
         </p>
       </div>
       

@@ -17,10 +17,10 @@ describe('CSV Pipeline (QA Tests)', () => {
   })
 
   it('CSV-003: validateCsv validates match counts and schema bounds', () => {
-    const validMatches = [{ match_code: 'GS_001', home_team: 'France', away_team: 'Brazil' }]
+    const validMatches = [{ match_code: 'R32_001', home_team: 'France', away_team: 'Brazil' }]
     const rows = [
       {
-        match_id: 'GS_001', home_team: 'France', away_team: 'Brazil', predicted_winner: 'France',
+        match_id: 'R32_001', home_team: 'France', away_team: 'Brazil', predicted_winner: 'France',
         predicted_home_score: '2', predicted_away_score: '1', predicted_possession_home: '50', predicted_possession_away: '50',
         predicted_shots_home: '10', predicted_shots_away: '8', predicted_xg_home: '1.5', predicted_xg_away: '0.8',
         predicted_yellow_home: '1', predicted_yellow_away: '2', predicted_red_home: '0', predicted_red_away: '0',
@@ -37,10 +37,10 @@ describe('CSV Pipeline (QA Tests)', () => {
   })
 
   it('CSV-004: validateCsv denies invalid possession sums', () => {
-    const validMatches = [{ match_code: 'GS_001', home_team: 'France', away_team: 'Brazil' }]
+    const validMatches = [{ match_code: 'R32_001', home_team: 'France', away_team: 'Brazil' }]
     const rows = [
       {
-        match_id: 'GS_001', home_team: 'France', away_team: 'Brazil', predicted_winner: 'France',
+        match_id: 'R32_001', home_team: 'France', away_team: 'Brazil', predicted_winner: 'France',
         predicted_home_score: '2', predicted_away_score: '1', 
         predicted_possession_home: '60', predicted_possession_away: '50', // 110 != 100
         predicted_shots_home: '10', predicted_shots_away: '8', predicted_xg_home: '1.5', predicted_xg_away: '0.8',

@@ -46,6 +46,8 @@ export default async function DashboardPage() {
     .limit(5)
 
   const predictions = await getDashboardPredictions(team.id)
+  
+  const { count: totalMatches } = await supabase.from('matches').select('*', { count: 'exact', head: true })
 
   const { data: settings } = await supabase.from('competition_settings').select('submission_deadline').single()
   const isClosed = settings?.submission_deadline ? new Date() > new Date(settings.submission_deadline) : false
@@ -93,6 +95,7 @@ export default async function DashboardPage() {
             stats={leaderboard?.stats_score || 0}
             champion={leaderboard?.champion_score || 0}
             confidence={leaderboard?.confidence_score || 0}
+            totalMatches={totalMatches || 0}
           />
         </div>
         <div className="lg:col-span-1 space-y-6">

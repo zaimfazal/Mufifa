@@ -110,18 +110,18 @@ export default async function Home(props: { searchParams?: SearchParams }) {
                 <div>
                   <h4 className="font-bold text-lg mb-1 text-foreground">Earn MuLearn Karma Points</h4>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    This competition is part of the MuLearn ecosystem. Participants who submit their ML notebook, methodology, and final predictions in the MuLearn Discord community will receive MuLearn Karma Points.
+                    This challenge is part of MuLearn. Participants who submit their ML notebook, methodology, and final predictions in the MuLearn Discord community will receive MuLearn Karma Points. If you are not part of the MuLearn community, please register through <a href="https://mulearn.org" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary transition-colors">mulearn.org</a>.
                   </p>
                 </div>
               </div>
               <div className="flex flex-col gap-3 shrink-0 w-full sm:w-auto">
                 <Button asChild className="w-full shadow-sm">
                   <Link href="https://mulearn.org/" target="_blank" rel="noopener noreferrer">
-                    Join MuLearn
+                    Register on MuLearn
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full shadow-sm bg-transparent border-primary/30 hover:bg-primary/10">
-                  <Link href="https://discord.gg/mulearn" target="_blank" rel="noopener noreferrer">
+                  <Link href="https://discord.gg/gtech-mulearn-771670169691881483" target="_blank" rel="noopener noreferrer">
                     Join Discord
                   </Link>
                 </Button>
@@ -158,7 +158,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
           <div className="grid gap-8 md:grid-cols-5">
             {[
               { step: '1', title: 'Build Your Model', desc: 'Use Random Forest, XGBoost, Neural Networks, or Custom AI. No restrictions on architecture.', icon: Cpu },
-              { step: '2', title: 'Generate Predictions', desc: 'Predict all matches from Group Stage to Final before the tournament begins.', icon: BrainCircuit },
+              { step: '2', title: 'Generate Predictions', desc: 'Predict all matches from the Round of 32 to the Final before the tournament begins.', icon: BrainCircuit },
               { step: '3', title: 'Submit Predictions', desc: 'Upload the official CSV. Only ONE final submission allowed. Permanently locked.', icon: Lock },
               { step: '4', title: 'Tournament Begins', desc: 'Organizers enter actual results. The engine evaluates predictions automatically.', icon: Globe },
               { step: '5', title: 'Climb Leaderboard', desc: 'Scores recalculate after every match. Track ranking, accuracy, and analytics.', icon: Trophy },
@@ -184,7 +184,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold tracking-tight">What Must Be Predicted?</h2>
-            <p className="mt-4 text-lg text-muted-foreground">Comprehensive coverage of 104 matches.</p>
+            <p className="mt-4 text-lg text-muted-foreground">Comprehensive coverage of all 32 Knockout Stage matches.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -286,7 +286,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
                   </TableHeader>
                   <TableBody>
                     {[
-                      { stage: 'Group Stage', mult: '1.0x' },
+
                       { stage: 'Round of 32', mult: '1.2x' },
                       { stage: 'Round of 16', mult: '1.5x' },
                       { stage: 'Quarter Final', mult: '2.0x' },

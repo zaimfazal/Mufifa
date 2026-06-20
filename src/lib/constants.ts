@@ -1,7 +1,7 @@
 import { TournamentStage } from '@/types/database'
 
 export const TOURNAMENT_STAGES: { value: TournamentStage; label: string; defaultMultiplier: number }[] = [
-  { value: 'group_stage', label: 'Group Stage', defaultMultiplier: 1.0 },
+
   { value: 'round_of_32', label: 'Round of 32', defaultMultiplier: 1.2 },
   { value: 'round_of_16', label: 'Round of 16', defaultMultiplier: 1.5 },
   { value: 'quarter_final', label: 'Quarter Final', defaultMultiplier: 2.0 },

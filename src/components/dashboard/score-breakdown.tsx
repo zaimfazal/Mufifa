@@ -11,19 +11,19 @@ interface ScoreBreakdownProps {
   stats: number
   champion: number
   confidence: number
+  totalMatches: number
 }
 
-// The leaderboard stores earned category scores; these caps reflect the configured tournament-wide maximums.
-const MAX_VALUES = {
-  winner: 104 * 20,
-  scoreline: 104 * 40,
-  scorer: 104 * 35,
-  stats: 104 * 45,
-  champion: 250,
-  confidence: 104 * 10
-}
-
-export function ScoreBreakdown({ winner, scoreline, scorer, stats, champion, confidence }: ScoreBreakdownProps) {
+export function ScoreBreakdown({ winner, scoreline, scorer, stats, champion, confidence, totalMatches }: ScoreBreakdownProps) {
+  // The leaderboard stores earned category scores; these caps reflect the configured tournament-wide maximums dynamically.
+  const MAX_VALUES = {
+    winner: totalMatches * 20,
+    scoreline: totalMatches * 40,
+    scorer: totalMatches * 35,
+    stats: totalMatches * 45,
+    champion: 250,
+    confidence: totalMatches * 10
+  }
   const categories = [
     { name: 'Outcome', earned: winner, max: MAX_VALUES.winner, color: 'bg-green-500' },
     { name: 'Scoreline', earned: scoreline, max: MAX_VALUES.scoreline, color: 'bg-blue-500' },

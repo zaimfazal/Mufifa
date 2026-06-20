@@ -33,7 +33,7 @@ export function MatchForm({ mode, match }: { mode: 'create' | 'edit', match?: an
     resolver: zodResolver(matchSchema) as any,
     defaultValues: {
       match_code: match?.match_code || '',
-      stage: match?.stage || 'group_stage',
+      stage: match?.stage || 'round_of_32',
       home_team: match?.home_team || '',
       away_team: match?.away_team || '',
       kickoff_time: defaultTime,

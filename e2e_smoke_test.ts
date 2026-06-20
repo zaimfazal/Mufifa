@@ -4,6 +4,7 @@ import { createAdminClient } from './src/lib/supabase/admin'
 import { parseCsvText } from './src/lib/csv/parser'
 import { validateCsv } from './src/lib/csv/validator'
 import { recalculateAll } from './src/lib/scoring/calculator'
+import { generateTemplate } from './src/lib/csv/template-generator'
 import fs from 'fs'
 
 async function runTest() {
@@ -39,11 +40,9 @@ async function runTest() {
     console.log(`   -> Created Team ${i}: ${teamName}`)
   }
 
-  console.log('2. Generating distinct CSV data payloads...')
-  const templateCsv = fs.readFileSync('full_submission_template.csv', 'utf8')
-  
-  const { data: matches } = await supabase.from('matches').select('id, match_code, home_team, away_team')
-  if (!matches) throw new Error('Matches not seeded')
+  const { data: matches } = await supabase.from('matches').select('*').order('kickoff_time')
+  if (!matches || matches.length === 0) throw new Error('Matches not seeded')
+  const templateCsv = generateTemplate(matches)
   const matchMap = new Map(matches.map(m => [m.match_code, m.id]))
 
   for (let i = 0; i < 3; i++) {
@@ -52,16 +51,38 @@ async function runTest() {
     const { rows: parsed, errors: pErr } = parseCsvText(templateCsv)
     if (pErr && pErr.length > 0) throw new Error(pErr.join(', '))
 
-    const gs001 = parsed.find(p => p.match_id === 'GS_001')
+    const firstMatchCode = matches[0].match_code
+    
+    parsed.forEach(p => {
+      p.predicted_winner = p.home_team
+      p.predicted_home_score = "1"
+      p.predicted_away_score = "0"
+      p.predicted_possession_home = "50"
+      p.predicted_possession_away = "50"
+      p.predicted_shots_home = "10"
+      p.predicted_shots_away = "10"
+      p.predicted_xg_home = "1.5"
+      p.predicted_xg_away = "1.0"
+      p.predicted_yellow_home = "1"
+      p.predicted_yellow_away = "1"
+      p.predicted_red_home = "0"
+      p.predicted_red_away = "0"
+      p.confidence = "80"
+      p.tournament_champion = "Brazil"
+    })
+
+    const gs001 = parsed.find(p => p.match_id === firstMatchCode)
+    if (!gs001) throw new Error(`Template did not contain ${firstMatchCode}`)
+    
     if (i === 0) {
-      gs001.home_score = "2"
-      gs001.away_score = "1"
+      gs001.predicted_home_score = "2"
+      gs001.predicted_away_score = "1"
     } else if (i === 1) {
-      gs001.home_score = "1"
-      gs001.away_score = "0"
+      gs001.predicted_home_score = "1"
+      gs001.predicted_away_score = "0"
     } else if (i === 2) {
-      gs001.home_score = "0"
-      gs001.away_score = "1"
+      gs001.predicted_home_score = "0"
+      gs001.predicted_away_score = "1"
     }
 
     const validationResult = validateCsv(parsed, matches)
@@ -74,6 +95,8 @@ async function runTest() {
 
     const { error: rpcErr } = await supabase.rpc('submit_predictions', {
       p_team_id: team.id,
+      p_file_path: `test/${team.id}_predictions.csv`,
+      p_file_name: 'test_predictions.csv',
       p_predictions: payload,
       p_champion: validationResult.champion
     })
@@ -81,19 +104,28 @@ async function runTest() {
     console.log(`   -> Team ${i+1} submitted predictions successfully.`)
   }
 
-  console.log('3. Submitting Real Admin Result (GS_001 -> 2-1)...')
-  const matchId = matchMap.get('GS_001')!
+  console.log(`3. Submitting Real Admin Result (${matches[0].match_code} -> 2-1)...`)
+  const matchId = matchMap.get(matches[0].match_code)!
   const { error: aErr } = await supabase.from('actual_results').upsert({
     match_id: matchId,
     home_score: 2,
     away_score: 1,
-    home_scorers: [],
-    away_scorers: [],
-    yellow_cards: 0,
-    red_cards: 0,
-    penalties: 0,
-    own_goals: 0,
-    status: 'completed'
+    extra_time_home: null,
+    extra_time_away: null,
+    penalty_home: null,
+    penalty_away: null,
+    goal_scorers: [],
+    first_goal_scorer: 'Messi',
+    possession_home: 50,
+    possession_away: 50,
+    shots_home: 10,
+    shots_away: 10,
+    xg_home: 1.5,
+    xg_away: 1.0,
+    yellow_home: 1,
+    yellow_away: 1,
+    red_home: 0,
+    red_away: 0
   })
   if (aErr) throw aErr
 
