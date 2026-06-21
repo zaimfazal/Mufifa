@@ -140,11 +140,13 @@ export function SubmissionClient({ initialData }: { initialData: any }) {
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
-                onClick={() => window.open('/Validation_Guide.pdf', '_blank')}
+                asChild
                 className="border-muted text-muted-foreground hover:bg-muted"
               >
-                <Download className="w-4 h-4 mr-2" />
-                Validation Guide
+                <a href="/Validation_Guide.pdf" target="_blank" rel="noopener noreferrer">
+                  <Download className="w-4 h-4 mr-2" />
+                  Validation Guide
+                </a>
               </Button>
               <Button 
                 variant="outline" 

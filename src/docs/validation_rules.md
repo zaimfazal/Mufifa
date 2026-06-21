@@ -20,14 +20,15 @@ This document outlines the strict validation rules for your predictions CSV file
 - **Extra Time & Penalties**: Leave empty if not applicable. If predicting penalties, provide positive integers.
 
 ## 3. Confidence Score Rules
-- The `confidence` column MUST contain a value between **0** and **1** (inclusive).
-- Examples of valid entries: `0`, `0.25`, `0.5`, `0.85`, `1`.
-- Values outside this range (e.g., `90` or `1.5`) will be rejected by the validator.
-- Decimals are fully supported.
+- The `confidence` column supports **BOTH** of the following formats:
+  - **Probability format**: A value between `0` and `1` (e.g., `0.25, 0.5, 0.85, 1`).
+  - **Percentage format**: A value between `0` and `100` (e.g., `25, 50, 85, 100`).
+- The validator automatically interprets and normalizes either format.
+- Values outside the `0-100` range or negative numbers will be rejected.
 
 ## 4. Goal Scorer Formats
 - Multiple goal scorers are fully supported.
-- You can separate multiple players using either a **comma (`,`)** or a **semicolon (`;`)**.
+- You can separate multiple players using either a **comma (,)** or a **semicolon (;)**.
 - Example of valid entries:
   - `Messi`
   - `Messi, Ronaldo`
@@ -42,7 +43,7 @@ This document outlines the strict validation rules for your predictions CSV file
 
 ## 6. Pre-Submission Checklist
 - [ ] Did you download the latest template from the platform?
-- [ ] Is your `confidence` score between 0 and 1?
+- [ ] Is your `confidence` score between 0 and 100?
 - [ ] Did you ensure possession sums strictly to 100?
 - [ ] Have you provided exactly the number of match rows expected?
 - [ ] Is your `tournament_champion` filled accurately?
