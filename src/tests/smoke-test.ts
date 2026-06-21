@@ -79,7 +79,7 @@ async function runSmokeTest() {
     process.exit(1)
   }
 
-  if (p1.goal_scorers.length === 2 && p1.goal_scorers[0].name === 'Messi' && p1.goal_scorers[0].goals === 1) {
+  if (p1.goal_scorers && p1.goal_scorers.length === 2 && p1.goal_scorers[0].name === 'Messi' && p1.goal_scorers[0].goals === 1) {
     console.log('PASS: Parser normalizes multi-scorer (Messi,Ronaldo -> 1 goal each)')
   } else {
     console.error('FAIL: Goal scorer normalization failed:', p1.goal_scorers)

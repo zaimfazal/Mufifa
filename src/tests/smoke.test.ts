@@ -69,8 +69,8 @@ describe('CSV Upload Smoke Test', () => {
     const p1 = validationResult.predictions[0]
     expect(p1.confidence).toBe(75)
     expect(p1.goal_scorers).toHaveLength(2)
-    expect(p1.goal_scorers[0]).toEqual({ name: 'Messi', goals: 1 })
-    expect(p1.goal_scorers[1]).toEqual({ name: 'Ronaldo', goals: 1 })
+    expect(p1.goal_scorers![0]).toEqual({ name: 'Messi', goals: 1 })
+    expect(p1.goal_scorers![1]).toEqual({ name: 'Ronaldo', goals: 1 })
 
     // 6. Test DB
     const { data: teams } = await supabase.from('teams').select('id').limit(1)
