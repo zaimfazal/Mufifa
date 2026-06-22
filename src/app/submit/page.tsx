@@ -29,9 +29,19 @@ export default async function SubmitPage() {
         <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary">
           Submission Portal
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mb-4">
           Upload your ML predictions for all knockout stage matches.
         </p>
+        
+        {data?.team && (
+          <div className="p-4 rounded-md bg-card/50 border border-border inline-block shadow-sm">
+            <p className="text-sm text-muted-foreground">Submitting as:</p>
+            <p className="font-bold text-foreground text-lg">{data.team.team_name}</p>
+            {user.user_metadata?.mulearn_id && (
+              <p className="text-xs text-muted-foreground mt-1">MuLearn ID: {user.user_metadata.mulearn_id}</p>
+            )}
+          </div>
+        )}
       </div>
       
       <SubmissionClient initialData={data} />
