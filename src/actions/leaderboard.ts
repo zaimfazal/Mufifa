@@ -7,15 +7,12 @@ export async function getLeaderboard(page: number = 1, pageSize: number = 50, se
   const supabase = await createClient()
 
   let query = supabase
-    .from('leaderboard')
-    .select(`
-      *,
-      teams!inner (team_name)
-    `, { count: 'exact' })
+    .from('leaderboard_public')
+    .select('*', { count: 'exact' })
     .order('rank', { ascending: true })
 
   if (search) {
-    query = query.ilike('teams.team_name', `%${search}%`)
+    query = query.ilike('team_name', `%${search}%`)
   }
 
   const from = (page - 1) * pageSize
@@ -31,7 +28,7 @@ export async function getLeaderboard(page: number = 1, pageSize: number = 50, se
   const rows = (data || []).map((entry: any) => ({
     id: entry.id,
     rank: entry.rank,
-    team_name: entry.teams?.team_name || 'Unknown Team',
+    team_name: entry.team_name || 'Unknown Team',
     total_score: entry.total_score,
     accuracy: entry.accuracy_percentage,
     winner_score: entry.winner_score,
