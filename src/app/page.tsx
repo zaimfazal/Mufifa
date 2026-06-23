@@ -171,7 +171,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
           <div className="grid gap-8 md:grid-cols-5">
             {[
               { step: '1', title: 'Build Your Model', desc: 'Use Random Forest, XGBoost, Neural Networks, or Custom AI. No restrictions on architecture.', icon: Cpu },
-              { step: '2', title: 'Generate Predictions', desc: 'Predict the exact score and goal scorers for every knockout match from the Round of 16 to the Final.', icon: BrainCircuit },
+              { step: '2', title: 'Generate Predictions', desc: 'Predict the exact score and goal scorers for every knockout match from the Round of 32 to the Final.', icon: BrainCircuit },
               { step: '3', title: 'Submit Predictions', desc: 'Upload the official CSV. You can re-upload to update your predictions any time before the deadline.', icon: Lock },
               { step: '4', title: 'Tournament Begins', desc: 'Organizers enter actual results. The engine evaluates predictions automatically.', icon: Globe },
               { step: '5', title: 'Climb Leaderboard', desc: 'Scores recalculate after every match. Track ranking, accuracy, and analytics.', icon: Trophy },
@@ -197,7 +197,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold tracking-tight">What Must Be Predicted?</h2>
-            <p className="mt-4 text-lg text-muted-foreground">Two things per match, across all 16 knockout matches from the Round of 16 onward.</p>
+            <p className="mt-4 text-lg text-muted-foreground">Two things per match, across all 32 knockout matches from the Round of 32 onward.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
@@ -261,6 +261,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
                   </TableHeader>
                   <TableBody>
                     {[
+                      { stage: 'Round of 32', mult: '1.2x' },
                       { stage: 'Round of 16', mult: '1.5x' },
                       { stage: 'Quarter Final', mult: '2.0x' },
                       { stage: 'Semi Final', mult: '3.0x' },

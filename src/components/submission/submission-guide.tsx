@@ -74,11 +74,12 @@ function LimitedGuide() {
       </section>
 
       <section>
-        <h4 className="font-semibold text-foreground mb-1">The count must match the score</h4>
+        <h4 className="font-semibold text-foreground mb-1">You can&apos;t list more scorers than goals</h4>
         <p className="text-muted-foreground">
-          The number of scorer entries on each side must equal that side&apos;s predicted score. A{' '}
-          <code>2 : 0</code> needs exactly 2 home numbers and 0 away numbers. A correctly predicted{' '}
-          <code>0 : 0</code> (no scorers on either side) still earns the scorer points.
+          Each scorer is listed once, so a side can have at most as many scorer numbers as goals —
+          fewer is fine (a brace is one number for two goals). A <code>2 : 0</code> can be{' '}
+          <code>10</code> (one player scored both) or <code>10;7</code>. A correctly predicted{' '}
+          <code>0 : 0</code> (no scorers either side) still earns the scorer points.
         </p>
       </section>
 

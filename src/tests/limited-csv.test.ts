@@ -43,8 +43,15 @@ describe('validateLimitedCsv', () => {
     expect(res.predictions[0].goal_scorers_jersey).toEqual({ home: [7, 10], away: [9] })
   })
 
-  it('rejects when scorer count does not match the score', () => {
-    const rows = parse('R16_089,Brazil,Spain,2,1,10,9') // 2-0 home but only 1 scorer
+  it('allows fewer scorers than goals (a brace lists the number once)', () => {
+    const rows = parse('R16_089,Brazil,Spain,2,1,10,9') // #10 scores both home goals
+    const res = validateLimitedCsv(rows, matches)
+    expect(res.valid).toBe(true)
+    expect(res.predictions[0].goal_scorers_jersey).toEqual({ home: [10], away: [9] })
+  })
+
+  it('rejects more scorers than goals', () => {
+    const rows = parse('R16_089,Brazil,Spain,2,1,10;7;9,4') // 3 home scorers, only 2 goals
     const res = validateLimitedCsv(rows, matches)
     expect(res.valid).toBe(false)
     expect(res.errors.some(e => e.column === 'predicted_scorers_home')).toBe(true)

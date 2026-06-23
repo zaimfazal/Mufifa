@@ -331,17 +331,19 @@ export function validateLimitedCsv(
       pushErr('predicted_scorers_away', `Scorer jersey numbers must be integers. Invalid: ${away.invalid.join(', ')}`)
     }
 
-    // Scorer count must equal the predicted score for that side
+    // Scorers are listed once per player (no goal counts), so a player scoring a
+    // brace shows up as a single number. You therefore can't have MORE distinct
+    // scorers than goals, but fewer is fine (braces, hat-tricks, own goals).
     if (homeValid && home.invalid.length === 0) {
       const homeScore = parseInt(row.predicted_home_score, 10)
-      if (home.numbers.length !== homeScore) {
-        pushErr('predicted_scorers_home', `Home has ${home.numbers.length} scorer number(s) but predicted score is ${homeScore}. They must match.`)
+      if (home.numbers.length > homeScore) {
+        pushErr('predicted_scorers_home', `Home has ${home.numbers.length} scorer number(s) but only ${homeScore} goal(s) predicted — you can't list more scorers than goals.`)
       }
     }
     if (awayValid && away.invalid.length === 0) {
       const awayScore = parseInt(row.predicted_away_score, 10)
-      if (away.numbers.length !== awayScore) {
-        pushErr('predicted_scorers_away', `Away has ${away.numbers.length} scorer number(s) but predicted score is ${awayScore}. They must match.`)
+      if (away.numbers.length > awayScore) {
+        pushErr('predicted_scorers_away', `Away has ${away.numbers.length} scorer number(s) but only ${awayScore} goal(s) predicted — you can't list more scorers than goals.`)
       }
     }
 

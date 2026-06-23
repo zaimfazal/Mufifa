@@ -46,16 +46,19 @@ for getting the winner or goal difference right.
   numbers exactly equals the actual scorers for **both** teams — no missing, no
   extra.
 
-### The scorer count must match the score
-The number of scorer entries on each side must equal that side's predicted
-score:
+### You can't list more scorers than goals
+Because each scorer is listed once, the number of scorer entries on a side must
+be **no greater than** that side's predicted score. Fewer is fine — that's how
+braces, hat-tricks and own goals work:
 
-- `2 : 0` → exactly **2** home numbers and **0** away numbers.
-- `0 : 0` → no numbers on either side. A correct `0 : 0` still earns the
-  scorer points (an empty set is a valid, correct prediction).
+- `2 : 0` with one player scoring both → home `10` (1 number, 2 goals). ✔
+- `2 : 0` with two different scorers → home `10;7`. ✔
+- `2 : 0` with three home numbers → rejected (more scorers than goals).
+- `0 : 0` → no numbers on either side. A correct `0 : 0` still earns the scorer
+  points (an empty set is a valid, correct prediction).
 
-If the counts don't match, the file is rejected with an error telling you which
-row and side to fix.
+If a side lists more scorers than goals, the file is rejected with an error
+telling you which row and side to fix.
 
 ---
 
@@ -72,8 +75,7 @@ predicted_scorers_away = 9
 ```
 
 - Score points: awarded only if the match ends 2–1.
-- Scorer points: awarded only if exactly #10 and #7 score for Brazil **and**
-  exactly #9 scores for Spain.
+- Scorer points: awarded only if exactly #10 and #7 score for Brazil **and**  exactly #9 scores for Spain.
 
 ---
 
@@ -84,9 +86,9 @@ predicted_scorers_away = 9
 | Exact score | 40 |
 | Exact scorer set | 25 |
 
-These are multiplied by the match's stage multiplier (Round of 16 ×1.5,
-Quarter Final ×2.0, Semi Final ×3.0, Third Place ×2.5, Final ×5.0), so the same
-correct prediction is worth more in later rounds.
+These are multiplied by the match's stage multiplier (Round of 32 ×1.2,
+Round of 16 ×1.5, Quarter Final ×2.0, Semi Final ×3.0, Third Place ×2.5,
+Final ×5.0), so the same correct prediction is worth more in later rounds.
 
 ---
 
