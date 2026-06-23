@@ -23,6 +23,12 @@ export default async function SubmitPage() {
     redirect('/dashboard')
   }
 
+  const { data: settings } = await supabase
+    .from('competition_settings')
+    .select('tier1_only_mode')
+    .single()
+  const limited = settings?.tier1_only_mode === true
+
   return (
     <div className="container max-w-4xl py-10 mx-auto px-4">
       <div className="mb-8">
@@ -44,7 +50,7 @@ export default async function SubmitPage() {
         )}
       </div>
       
-      <SubmissionClient initialData={data} />
+      <SubmissionClient initialData={data} limited={limited} />
     </div>
   )
 }

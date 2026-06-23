@@ -19,6 +19,12 @@ export default async function ResultsPage() {
     .select('*, actual_results(*)')
     .order('kickoff_time', { ascending: false })
 
+  const { data: settings } = await supabase
+    .from('competition_settings')
+    .select('tier1_only_mode')
+    .single()
+  const limited = settings?.tier1_only_mode === true
+
   return (
     <div className="p-8 space-y-6">
       <div>
@@ -51,7 +57,7 @@ export default async function ResultsPage() {
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
-                <ResultEntryForm match={match} existingResult={actualResult} />
+                <ResultEntryForm match={match} existingResult={actualResult} limited={limited} />
               </CardContent>
             </Card>
           )

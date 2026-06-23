@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { CsvRow, ValidationError, ValidationResult } from '@/types/predictions'
-import { parseGoalScorers } from './parser'
+import { CsvRow, LimitedCsvRow, ValidationError, ValidationResult } from '@/types/predictions'
+import { parseGoalScorers, parseJerseyNumbers } from './parser'
 
 type MatchReference = {
   match_code: string
@@ -273,6 +273,103 @@ export function validateCsv(
       column: 'match_id',
       message: `Missing predictions for matches: ${missingMatches.join(', ')}`
     })
+  }
+
+  return result
+}
+
+/**
+ * Limited-mode validation: each match needs an exact score and a set of scorer
+ * jersey numbers per team. Rules:
+ *  - home/away scores are non-negative integers
+ *  - scorer entries are integers
+ *  - the count of scorer numbers on each side must equal that side's score
+ */
+export function validateLimitedCsv(
+  rows: LimitedCsvRow[],
+  validMatches: string[] | MatchReference[]
+): ValidationResult {
+  const result: ValidationResult = { valid: true, errors: [], predictions: [], champion: '' }
+
+  const seenMatches = new Set<string>()
+  const validMatchIds = getValidMatchIds(validMatches)
+
+  rows.forEach((row, index) => {
+    const rowNumber = index + 2 // 1-indexed + header
+
+    const pushErr = (column: string, message: string) => {
+      result.valid = false
+      result.errors.push({ row: rowNumber, column, message })
+    }
+
+    // Match ID checks
+    if (!row.match_id) {
+      pushErr('match_id', 'Match ID is required')
+      return
+    }
+    if (validMatchIds.length > 0 && !validMatchIds.includes(row.match_id)) {
+      pushErr('match_id', `Invalid match ID: ${row.match_id}`)
+    }
+    if (seenMatches.has(row.match_id)) {
+      pushErr('match_id', `Duplicate prediction for match: ${row.match_id}`)
+    }
+    seenMatches.add(row.match_id)
+
+    // Scores must be non-negative integers
+    const homeValid = /^\d+$/.test(row.predicted_home_score)
+    const awayValid = /^\d+$/.test(row.predicted_away_score)
+    if (!homeValid) pushErr('predicted_home_score', 'Home score must be a non-negative integer')
+    if (!awayValid) pushErr('predicted_away_score', 'Away score must be a non-negative integer')
+
+    // Jersey numbers must be integers
+    const home = parseJerseyNumbers(row.predicted_scorers_home)
+    const away = parseJerseyNumbers(row.predicted_scorers_away)
+    if (home.invalid.length > 0) {
+      pushErr('predicted_scorers_home', `Scorer jersey numbers must be integers. Invalid: ${home.invalid.join(', ')}`)
+    }
+    if (away.invalid.length > 0) {
+      pushErr('predicted_scorers_away', `Scorer jersey numbers must be integers. Invalid: ${away.invalid.join(', ')}`)
+    }
+
+    // Scorer count must equal the predicted score for that side
+    if (homeValid && home.invalid.length === 0) {
+      const homeScore = parseInt(row.predicted_home_score, 10)
+      if (home.numbers.length !== homeScore) {
+        pushErr('predicted_scorers_home', `Home has ${home.numbers.length} scorer number(s) but predicted score is ${homeScore}. They must match.`)
+      }
+    }
+    if (awayValid && away.invalid.length === 0) {
+      const awayScore = parseInt(row.predicted_away_score, 10)
+      if (away.numbers.length !== awayScore) {
+        pushErr('predicted_scorers_away', `Away has ${away.numbers.length} scorer number(s) but predicted score is ${awayScore}. They must match.`)
+      }
+    }
+
+    if (result.valid) {
+      result.predictions.push({
+        match_id: row.match_id,
+        winner: null,
+        home_score: parseInt(row.predicted_home_score, 10),
+        away_score: parseInt(row.predicted_away_score, 10),
+        extra_time_home: null, extra_time_away: null,
+        penalty_home: null, penalty_away: null,
+        goal_scorers: null,
+        first_goal_scorer: null,
+        possession_home: null, possession_away: null,
+        shots_home: null, shots_away: null,
+        xg_home: null, xg_away: null,
+        yellow_home: null, yellow_away: null,
+        red_home: null, red_away: null,
+        confidence: null,
+        goal_scorers_jersey: { home: home.numbers, away: away.numbers },
+      })
+    }
+  })
+
+  const missingMatches = validMatchIds.filter(id => !seenMatches.has(id))
+  if (missingMatches.length > 0) {
+    result.valid = false
+    result.errors.push({ row: 0, column: 'match_id', message: `Missing predictions for matches: ${missingMatches.join(', ')}` })
   }
 
   return result

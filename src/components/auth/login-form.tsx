@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { signIn } from '@/actions/auth'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -27,7 +28,8 @@ const loginSchema = z.object({
 
 export function LoginForm() {
   const [isPending, startTransition] = useTransition()
-  
+  const router = useRouter()
+
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -45,6 +47,9 @@ export function LoginForm() {
       const result = await signIn(formData)
       if (result?.error) {
         toast.error(result.error)
+      } else if (result?.success) {
+        router.push('/dashboard')
+        router.refresh()
       }
     })
   }

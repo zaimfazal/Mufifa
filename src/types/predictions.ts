@@ -31,6 +31,23 @@ export interface GoalScorer {
   goals: number;
 }
 
+// Limited-mode CSV row: exact score + scorer jersey numbers per team.
+export interface LimitedCsvRow {
+  match_id: string;
+  home_team: string;
+  away_team: string;
+  predicted_home_score: string;
+  predicted_away_score: string;
+  predicted_scorers_home: string;
+  predicted_scorers_away: string;
+}
+
+// Limited-mode scorers, stored in the predictions.goal_scorers JSONB column.
+export interface JerseyScorers {
+  home: number[];
+  away: number[];
+}
+
 export interface ParsedPrediction {
   match_id: string;
   winner: string | null;
@@ -53,6 +70,9 @@ export interface ParsedPrediction {
   red_home: number | null;
   red_away: number | null;
   confidence: number | null;
+  // Limited mode only: scorer jersey-number sets per team. When present, this
+  // is persisted into goal_scorers instead of the name-based GoalScorer[].
+  goal_scorers_jersey?: JerseyScorers | null;
 }
 
 export interface ValidationError {

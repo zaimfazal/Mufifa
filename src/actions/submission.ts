@@ -1,8 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { parseCsvText } from '@/lib/csv/parser'
-import { validateCsv } from '@/lib/csv/validator'
+import { parseLimitedCsvText, isLimitedCsvText } from '@/lib/csv/parser'
+import { validateLimitedCsv } from '@/lib/csv/validator'
 import { generateTemplate } from '@/lib/csv/template-generator'
 import { revalidatePath } from 'next/cache'
 import { globalRateLimiter } from '@/lib/rate-limit'
@@ -41,10 +41,10 @@ export async function uploadSubmission(formData: FormData) {
   if (!team) return { error: 'No team found. Please create a team first.' }
   if (team.submission_locked) return { error: 'Your submission has been locked by an administrator.' }
 
-  // Check global submission deadline
+  // Check global submission deadline + active scoring mode
   const { data: settings } = await supabase
     .from('competition_settings')
-    .select('submission_deadline')
+    .select('submission_deadline, tier1_only_mode')
     .single()
 
   if (settings?.submission_deadline) {
@@ -54,20 +54,24 @@ export async function uploadSubmission(formData: FormData) {
   }
 
   const text = await file.text()
-  
-  // Parse
-  const { rows, errors: parseErrors } = parseCsvText(text)
-  if (parseErrors.length > 0) {
-    return { validationResult: { valid: false, errors: parseErrors.map((e) => ({ row: 0, column: 'file', message: e })), predictions: [], champion: '' } }
-  }
 
   // Fetch valid matches
   const { data: matches } = await supabase
     .from('matches')
     .select('match_code, home_team, away_team')
 
-  // Validate
-  const validationResult = validateCsv(rows, matches || [])
+  // The active competition uses the limited template (exact score + scorer
+  // jersey numbers) for everyone. We always parse/validate in that format so it
+  // doesn't depend on a per-session read of the mode flag.
+  let validationResult
+  if (!isLimitedCsvText(text)) {
+    return { validationResult: { valid: false, errors: [{ row: 0, column: 'file', message: 'Please use the current template (match, exact score, scorer jersey numbers). Download it with "Get Template".' }], predictions: [], champion: '' } }
+  }
+  const { rows, errors: parseErrors } = parseLimitedCsvText(text)
+  if (parseErrors.length > 0) {
+    return { validationResult: { valid: false, errors: parseErrors.map((e) => ({ row: 0, column: 'file', message: e })), predictions: [], champion: '' } }
+  }
+  validationResult = validateLimitedCsv(rows, matches || [])
 
   if (!validationResult.valid) {
     // Record failed submission attempt. submissions has UNIQUE(team_id), so
@@ -113,7 +117,8 @@ export async function uploadSubmission(formData: FormData) {
     extra_time_away: p.extra_time_away,
     penalty_home: p.penalty_home,
     penalty_away: p.penalty_away,
-    goal_scorers: p.goal_scorers,
+    // Limited mode stores jersey-number sets { home, away }; full mode stores GoalScorer[].
+    goal_scorers: p.goal_scorers_jersey ?? p.goal_scorers,
     first_goal_scorer: p.first_goal_scorer,
     possession_home: p.possession_home,
     possession_away: p.possession_away,
@@ -195,7 +200,8 @@ export async function downloadTemplate() {
     .select('*')
     .order('kickoff_time', { ascending: true })
 
-  const csvContent = generateTemplate(matches || [])
+  // Always the limited template (exact score + scorer jersey numbers) for everyone.
+  const csvContent = generateTemplate(matches || [], true)
   return csvContent
 }
 

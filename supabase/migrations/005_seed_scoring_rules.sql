@@ -7,6 +7,7 @@ INSERT INTO scoring_rules (rule_key, rule_name, points) VALUES
   ('correct_scorer', 'Correct Goal Scorer (per player)', 10),
   ('correct_goal_count', 'Correct Goal Count for Scorer', 10),
   ('exact_scorer_list', 'Exact Scorer List Match', 25),
+  ('exact_scorers', 'Exact Scorer Set (jersey numbers, limited mode)', 25),
   ('first_goal_scorer', 'Correct First Goal Scorer', 15),
   ('possession_accuracy', 'Possession Accuracy (±5%)', 10),
   ('shots_accuracy', 'Shots on Target Accuracy (±2)', 10),
@@ -17,7 +18,7 @@ INSERT INTO scoring_rules (rule_key, rule_name, points) VALUES
   ('penalty_score', 'Exact Penalty Score', 30),
   ('confidence_bonus', 'High Confidence Bonus (>80%)', 10),
   ('confidence_penalty', 'High Confidence Penalty (>80%)', -10),
-  ('champion_prediction', 'Correct Tournament Champion', 250)
+  ('champion_prediction', 'Correct Tournament Champion', 100)
 ON CONFLICT (rule_key) DO UPDATE SET 
   points = EXCLUDED.points,
   rule_name = EXCLUDED.rule_name;

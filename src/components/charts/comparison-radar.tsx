@@ -45,7 +45,7 @@ export function ComparisonRadar({ teamsList }: { teamsList: { id: string, team_n
           <label className="text-sm font-medium text-accent">Model A (Green)</label>
           <Select value={teamAId} onValueChange={(val) => setTeamAId(val || '')}>
             <SelectTrigger className="w-full glass-panel border-accent/50 focus:ring-accent">
-              <SelectValue placeholder="Select Team A" />
+              <SelectValue placeholder="Select Nickname A" />
             </SelectTrigger>
             <SelectContent className="glass-panel border-border/50">
               {teamsList.map(t => (
@@ -60,7 +60,7 @@ export function ComparisonRadar({ teamsList }: { teamsList: { id: string, team_n
           <label className="text-sm font-medium text-secondary">Model B (Blue)</label>
           <Select value={teamBId} onValueChange={(val) => setTeamBId(val || '')}>
             <SelectTrigger className="w-full glass-panel border-secondary/50 focus:ring-secondary">
-              <SelectValue placeholder="Select Team B" />
+              <SelectValue placeholder="Select Nickname B" />
             </SelectTrigger>
             <SelectContent className="glass-panel border-border/50">
               {teamsList.map(t => (
@@ -131,7 +131,7 @@ export function ComparisonRadar({ teamsList }: { teamsList: { id: string, team_n
         </div>
       ) : (
         <div className="h-[400px] flex items-center justify-center glass-panel border-border/50 rounded-xl">
-          <p className="text-muted-foreground">Select two different teams to compare their models.</p>
+          <p className="text-muted-foreground">Select two different nicknames to compare their models.</p>
         </div>
       )}
     </div>

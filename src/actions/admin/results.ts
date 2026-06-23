@@ -5,41 +5,48 @@ import { logAuditEvent } from './audit'
 import { recalculateForMatch } from '@/lib/scoring/calculator'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from './require-admin'
+import { parseJerseyNumbers } from '@/lib/csv/parser'
 
 export async function enterResult(matchId: string, formData: FormData) {
   const adminUser = await requireAdmin()
   const supabase = createAdminClient()
-  
-  // Extract all data from formData
-  const winner = formData.get('winner') as string
-  const homeScore = parseInt(formData.get('home_score') as string)
-  const awayScore = parseInt(formData.get('away_score') as string)
-  const possessionHome = parseFloat(formData.get('possession_home') as string)
-  const possessionAway = parseFloat(formData.get('possession_away') as string)
-  const shotsHome = parseInt(formData.get('shots_home') as string)
-  const shotsAway = parseInt(formData.get('shots_away') as string)
-  const xgHome = parseFloat(formData.get('xg_home') as string)
-  const xgAway = parseFloat(formData.get('xg_away') as string)
-  const yellowHome = parseInt(formData.get('yellow_home') as string)
-  const yellowAway = parseInt(formData.get('yellow_away') as string)
-  const redHome = parseInt(formData.get('red_home') as string)
-  const redAway = parseInt(formData.get('red_away') as string)
-  
-  const penaltyHomeRaw = formData.get('penalty_home')
-  const penaltyHome = penaltyHomeRaw ? parseInt(penaltyHomeRaw as string) : null
-  const penaltyAwayRaw = formData.get('penalty_away')
-  const penaltyAway = penaltyAwayRaw ? parseInt(penaltyAwayRaw as string) : null
 
-  // Process Goal Scorers
-  const goalScorersRaw = formData.get('goal_scorers') as string
-  let goalScorers: { name: string; goals: number }[] = []
-  if (goalScorersRaw) {
-    // Format: Player A:2;Player B:1
-    const parts = goalScorersRaw.split(';').filter(p => p.trim() !== '')
-    goalScorers = parts.map(p => {
-      const [name, goals] = p.split(':')
-      return { name: name.trim(), goals: parseInt(goals.trim()) }
-    })
+  // Null-safe numeric parse: missing/blank fields (e.g. in limited mode) become null
+  // rather than NaN so they don't corrupt the row.
+  const numOrNull = (key: string, float = false): number | null => {
+    const raw = formData.get(key)
+    if (raw === null || String(raw).trim() === '') return null
+    const n = float ? parseFloat(String(raw)) : parseInt(String(raw), 10)
+    return Number.isNaN(n) ? null : n
+  }
+
+  const winner = (formData.get('winner') as string) || null
+  const homeScore = numOrNull('home_score')
+  const awayScore = numOrNull('away_score')
+
+  const penaltyHome = numOrNull('penalty_home')
+  const penaltyAway = numOrNull('penalty_away')
+
+  // Goal scorers: limited mode posts jersey-number sets (scorers_home/away);
+  // full mode posts the name-based "Player A:2;Player B:1" string.
+  const scorersHomeRaw = formData.get('scorers_home')
+  const scorersAwayRaw = formData.get('scorers_away')
+  let goalScorers: unknown
+  if (scorersHomeRaw !== null || scorersAwayRaw !== null) {
+    goalScorers = {
+      home: parseJerseyNumbers(String(scorersHomeRaw ?? '')).numbers,
+      away: parseJerseyNumbers(String(scorersAwayRaw ?? '')).numbers,
+    }
+  } else {
+    const goalScorersRaw = formData.get('goal_scorers') as string
+    const list: { name: string; goals: number }[] = []
+    if (goalScorersRaw) {
+      for (const p of goalScorersRaw.split(';').filter(s => s.trim() !== '')) {
+        const [name, goals] = p.split(':')
+        list.push({ name: name.trim(), goals: parseInt(goals.trim()) })
+      }
+    }
+    goalScorers = list
   }
 
   const firstGoalScorerRaw = formData.get('first_goal_scorer') as string
@@ -50,16 +57,16 @@ export async function enterResult(matchId: string, formData: FormData) {
     winner,
     home_score: homeScore,
     away_score: awayScore,
-    possession_home: possessionHome,
-    possession_away: possessionAway,
-    shots_home: shotsHome,
-    shots_away: shotsAway,
-    xg_home: xgHome,
-    xg_away: xgAway,
-    yellow_home: yellowHome,
-    yellow_away: yellowAway,
-    red_home: redHome,
-    red_away: redAway,
+    possession_home: numOrNull('possession_home', true),
+    possession_away: numOrNull('possession_away', true),
+    shots_home: numOrNull('shots_home'),
+    shots_away: numOrNull('shots_away'),
+    xg_home: numOrNull('xg_home', true),
+    xg_away: numOrNull('xg_away', true),
+    yellow_home: numOrNull('yellow_home'),
+    yellow_away: numOrNull('yellow_away'),
+    red_home: numOrNull('red_home'),
+    red_away: numOrNull('red_away'),
     penalty_home: penaltyHome,
     penalty_away: penaltyAway,
     goal_scorers: goalScorers,

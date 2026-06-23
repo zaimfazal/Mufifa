@@ -5,6 +5,7 @@ import { useState, useTransition } from 'react'
 import { CsvUpload } from '@/components/submission/csv-upload'
 import { ValidationResults } from '@/components/submission/validation-results'
 import { SubmissionStatus } from '@/components/submission/submission-status'
+import { SubmissionGuide } from '@/components/submission/submission-guide'
 import { uploadSubmission, downloadTemplate, createTeam } from '@/actions/submission'
 import { ValidationResult } from '@/types/predictions'
 import { Button } from '@/components/ui/button'
@@ -25,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-export function SubmissionClient({ initialData }: { initialData: any }) {
+export function SubmissionClient({ initialData, limited = false }: { initialData: any, limited?: boolean }) {
   const [file, setFile] = useState<File | null>(null)
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -86,7 +87,7 @@ export function SubmissionClient({ initialData }: { initialData: any }) {
       if (result?.error) {
         toast.error(result.error)
       } else {
-        toast.success("Team created successfully!")
+        toast.success("Nickname created successfully!")
         window.location.reload()
       }
     })
@@ -99,7 +100,7 @@ export function SubmissionClient({ initialData }: { initialData: any }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-accent">
             <Users className="w-6 h-6" />
-            Create Your Team
+            Create Your Nickname
           </CardTitle>
           <CardDescription>
             You need to create a nickname before submitting your predictions.
@@ -112,7 +113,7 @@ export function SubmissionClient({ initialData }: { initialData: any }) {
               <Input id="team_name" name="team_name" placeholder="e.g. The Data Wizards" required minLength={3} className="bg-background/50" />
             </div>
             <Button type="submit" disabled={isPending} className="bg-accent text-accent-foreground hover:bg-accent/90 neon-border-green">
-              {isPending ? 'Creating...' : 'Create Team'}
+              {isPending ? 'Creating...' : 'Create Nickname'}
             </Button>
           </form>
         </CardContent>
@@ -140,16 +141,7 @@ export function SubmissionClient({ initialData }: { initialData: any }) {
               <CardDescription>Upload your completed CSV template here.</CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                asChild
-                className="border-muted text-muted-foreground hover:bg-muted"
-              >
-                <a href="/Validation_Guide.pdf" target="_blank" rel="noopener noreferrer">
-                  <Download className="w-4 h-4 mr-2" />
-                  Validation Guide
-                </a>
-              </Button>
+              <SubmissionGuide limited={limited} />
               <Button 
                 variant="outline" 
                 onClick={handleDownloadTemplate} 

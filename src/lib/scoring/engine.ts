@@ -112,6 +112,45 @@ export function calculateScorerScore(prediction: Prediction, actual: Actual, rul
   return points
 }
 
+// Limited-mode scorers are stored as per-team jersey-number sets:
+//   { home: number[], away: number[] }
+// No goal counts: a number appears at most once and means "this player scored".
+type JerseyScorers = { home?: unknown[]; away?: unknown[] }
+
+function toJerseySet(value: unknown): Set<number> {
+  const arr = Array.isArray(value) ? value : []
+  const set = new Set<number>()
+  for (const v of arr) {
+    const n = typeof v === 'number' ? v : parseInt(String(v), 10)
+    if (!Number.isNaN(n)) set.add(n)
+  }
+  return set
+}
+
+function setsEqual(a: Set<number>, b: Set<number>): boolean {
+  if (a.size !== b.size) return false
+  for (const n of a) if (!b.has(n)) return false
+  return true
+}
+
+// Exact-set scorer scoring for limited mode: full points only if the predicted
+// jersey-number set matches the actual set for BOTH teams (no missing, no extra).
+// An empty set on both sides (a correctly predicted 0-0) counts as correct.
+export function calculateExactScorersScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>): number {
+  const pred = (prediction.goal_scorers ?? { home: [], away: [] }) as JerseyScorers
+  const act = (actual.goal_scorers ?? { home: [], away: [] }) as JerseyScorers
+
+  const predHome = toJerseySet(pred.home)
+  const predAway = toJerseySet(pred.away)
+  const actHome = toJerseySet(act.home)
+  const actAway = toJerseySet(act.away)
+
+  if (setsEqual(predHome, actHome) && setsEqual(predAway, actAway)) {
+    return rules['exact_scorers']?.points || 0
+  }
+  return 0
+}
+
 export function calculateStatsScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>) {
   let points = 0
 
@@ -188,46 +227,52 @@ export function calculateConfidenceScore(prediction: Prediction, actual: Actual,
   }
 }
 
-export function calculateMaxPossibleScore(rules: Record<string, ScoringRule>, multiplier: number, actual: Actual): number {
+export function calculateMaxPossibleScore(rules: Record<string, ScoringRule>, multiplier: number, actual: Actual, tier1Only = false): number {
   let max = 0
   const hasPenalties = actual.penalty_home !== null || actual.penalty_away !== null
-  
+
+  // Limited mode: only exact scoreline + exact scorer set are achievable.
+  if (tier1Only) {
+    max += (rules['exact_scoreline']?.points || 0) + (rules['exact_scorers']?.points || 0)
+    return max * multiplier
+  }
+
   // Best outcome
   max += Math.max(rules['correct_winner']?.points || 0, rules['correct_draw']?.points || 0)
   // Best scoreline
   max += rules['exact_scoreline']?.points || 0
-  
+
   // Best scorer dynamically calculated based on actual match scorers
-  const actualScorers = actual.goal_scorers 
-    ? (actual.goal_scorers as GoalScorer[]).filter(s => !s.name.toLowerCase().includes('own goal') && s.name.toLowerCase() !== 'og') 
+  const actualScorers = actual.goal_scorers
+    ? (actual.goal_scorers as GoalScorer[]).filter(s => !s.name.toLowerCase().includes('own goal') && s.name.toLowerCase() !== 'og')
     : []
-  
+
   if (actualScorers.length > 0) {
     const scorerCount = actualScorers.length
     max += scorerCount * (rules['correct_scorer']?.points || 0)
     max += scorerCount * (rules['correct_goal_count']?.points || 0)
     max += rules['exact_scorer_list']?.points || 0
   }
-  
+
   if (actual.first_goal_scorer) {
     max += rules['first_goal_scorer']?.points || 0
   }
 
   // Best stats
   max += (rules['possession_accuracy']?.points || 0) + (rules['shots_accuracy']?.points || 0) + (rules['xg_accuracy']?.points || 0) + (rules['yellow_cards_accuracy']?.points || 0) + (rules['red_cards_exact']?.points || 0)
-  
+
   // Penalties
   if (hasPenalties) {
     max += (rules['penalty_winner']?.points || 0) + (rules['penalty_score']?.points || 0)
   }
-  
+
   // Confidence
   max += rules['confidence_bonus']?.points || 0
-  
+
   return max * multiplier
 }
 
-export function calculateMatchScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>, multiplier: number): MatchScoreResult {
+export function calculateMatchScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>, multiplier: number, tier1Only = false): MatchScoreResult {
   const predictedWinner = normalizeOutcome(prediction.winner, actual)
   
   // BRACKET BUST CHECK:
@@ -251,20 +296,49 @@ export function calculateMatchScore(prediction: Prediction, actual: Actual, rule
         confidence: 0
       },
       multiplier,
-      maxPossible: calculateMaxPossibleScore(rules, multiplier, actual)
+      maxPossible: calculateMaxPossibleScore(rules, multiplier, actual, tier1Only)
+    }
+  }
+
+  // Limited mode scores ONLY two things, both all-or-nothing:
+  //   - exact scoreline (both numbers must match)
+  //   - exact scorer jersey-number set per team
+  // Everything else (outcome, stats, penalties, confidence) is zero here.
+  if (tier1Only) {
+    const exactScore = (prediction.home_score !== null && prediction.away_score !== null &&
+                        prediction.home_score === actual.home_score &&
+                        prediction.away_score === actual.away_score)
+      ? (rules['exact_scoreline']?.points || 0)
+      : 0
+    const exactScorers = calculateExactScorersScore(prediction, actual, rules)
+
+    const baseTotal = exactScore + exactScorers
+    return {
+      total: baseTotal,
+      multipliedTotal: baseTotal * multiplier,
+      breakdown: {
+        outcome: 0,
+        scoreline: exactScore * multiplier,
+        scorer: exactScorers * multiplier,
+        stats: 0,
+        penalty: 0,
+        confidence: 0
+      },
+      multiplier,
+      maxPossible: calculateMaxPossibleScore(rules, multiplier, actual, tier1Only)
     }
   }
 
   const outcome = calculateOutcomeScore(prediction, actual, rules).points
+  const stats = calculateStatsScore(prediction, actual, rules)
   const scoreline = calculateScorelineScore(prediction, actual, rules)
   const scorer = calculateScorerScore(prediction, actual, rules)
-  const stats = calculateStatsScore(prediction, actual, rules)
   const penalty = calculatePenaltyScore(prediction, actual, rules)
   const confidence = calculateConfidenceScore(prediction, actual, rules)
 
   const unmultipliedTotal = outcome + scoreline + scorer + stats + penalty + confidence
   const multipliedTotal = unmultipliedTotal * multiplier
-  const maxPossible = calculateMaxPossibleScore(rules, multiplier, actual)
+  const maxPossible = calculateMaxPossibleScore(rules, multiplier, actual, tier1Only)
 
   return {
     total: unmultipliedTotal,

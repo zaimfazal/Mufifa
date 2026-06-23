@@ -35,7 +35,11 @@ export async function signUp(formData: FormData) {
   })
 
   if (error) {
-    return { error: error.message }
+    console.error('[signUp] Supabase auth error:', JSON.stringify(error, Object.getOwnPropertyNames(error)))
+    const message = error.message && error.message !== '{}'
+      ? error.message
+      : 'Could not create your account. Please try again.'
+    return { error: message }
   }
 
   // Next.js redirect needs to happen outside of try-catch/if blocks
@@ -53,11 +57,15 @@ export async function signIn(formData: FormData) {
   })
 
   if (error) {
-    return { error: error.message }
+    console.error('[signIn] Supabase auth error:', JSON.stringify(error, Object.getOwnPropertyNames(error)))
+    const message = error.message && error.message !== '{}'
+      ? error.message
+      : 'Could not sign you in. Please check your credentials and try again.'
+    return { error: message }
   }
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  return { success: true }
 }
 
 export async function signOut() {
