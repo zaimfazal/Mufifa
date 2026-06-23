@@ -1,7 +1,6 @@
 import { TournamentStage } from '@/types/database'
 
 export const TOURNAMENT_STAGES: { value: TournamentStage; label: string; defaultMultiplier: number }[] = [
-
   { value: 'round_of_32', label: 'Round of 32', defaultMultiplier: 1.2 },
   { value: 'round_of_16', label: 'Round of 16', defaultMultiplier: 1.5 },
   { value: 'quarter_final', label: 'Quarter Final', defaultMultiplier: 2.0 },
@@ -35,6 +34,18 @@ export const CSV_COLUMNS = [
   'predicted_red_away',
   'confidence',
   'tournament_champion'
+]
+
+// Limited-mode template: each match needs only the exact score and the set of
+// scorer jersey numbers per team (semicolon-separated, e.g. "10;7").
+export const CSV_LIMITED_COLUMNS = [
+  'match_id',
+  'home_team',
+  'away_team',
+  'predicted_home_score',
+  'predicted_away_score',
+  'predicted_scorers_home',
+  'predicted_scorers_away',
 ]
 
 export const LEGACY_CSV_COLUMNS = [

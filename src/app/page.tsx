@@ -148,7 +148,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
                 <Target className="text-primary w-6 h-6" /> Forecast the following:
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {['Match winners', 'Final scores', 'Goal scorers', 'First goal scorer', 'Possession stats', 'Expected goals (xG)', 'Shots on target', 'Yellow cards', 'Red cards', 'Penalty shootouts', 'World Cup Champion'].map((item) => (
+                {['Exact final score', 'Goal scorers (by jersey number)'].map((item) => (
                   <div key={item} className="flex items-center gap-2 bg-background border border-border p-3 rounded-lg shadow-sm">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
                     <span className="text-sm font-medium">{item}</span>
@@ -171,8 +171,8 @@ export default async function Home(props: { searchParams?: SearchParams }) {
           <div className="grid gap-8 md:grid-cols-5">
             {[
               { step: '1', title: 'Build Your Model', desc: 'Use Random Forest, XGBoost, Neural Networks, or Custom AI. No restrictions on architecture.', icon: Cpu },
-              { step: '2', title: 'Generate Predictions', desc: 'Predict all matches from the Round of 32 to the Final before the tournament begins.', icon: BrainCircuit },
-              { step: '3', title: 'Submit Predictions', desc: 'Upload the official CSV. Only ONE final submission allowed. Permanently locked.', icon: Lock },
+              { step: '2', title: 'Generate Predictions', desc: 'Predict the exact score and goal scorers for every knockout match from the Round of 16 to the Final.', icon: BrainCircuit },
+              { step: '3', title: 'Submit Predictions', desc: 'Upload the official CSV. You can re-upload to update your predictions any time before the deadline.', icon: Lock },
               { step: '4', title: 'Tournament Begins', desc: 'Organizers enter actual results. The engine evaluates predictions automatically.', icon: Globe },
               { step: '5', title: 'Climb Leaderboard', desc: 'Scores recalculate after every match. Track ranking, accuracy, and analytics.', icon: Trophy },
             ].map((item) => (
@@ -197,69 +197,31 @@ export default async function Home(props: { searchParams?: SearchParams }) {
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold tracking-tight">What Must Be Predicted?</h2>
-            <p className="mt-4 text-lg text-muted-foreground">Comprehensive coverage of all 32 Knockout Stage matches.</p>
+            <p className="mt-4 text-lg text-muted-foreground">Two things per match, across all 16 knockout matches from the Round of 16 onward.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             <Card className="border-border">
               <CardHeader>
-                <CardTitle className="text-xl">Match Outcome</CardTitle>
+                <CardTitle className="text-xl">Exact Final Score</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                  <li>Winner</li>
-                  <li>Final Score</li>
-                  <li>Extra Time Result</li>
-                  <li>Penalty Shootout Result</li>
-                </ul>
-              </CardContent>
-            </Card>
-            <Card className="border-border">
-              <CardHeader>
-                <CardTitle className="text-xl">Goal Scoring</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                  <li>Goal Scorers</li>
-                  <li>Goals Per Scorer</li>
-                  <li>First Goal Scorer</li>
-                </ul>
+                <p className="text-sm text-muted-foreground">
+                  Predict the precise full-time scoreline for each match (e.g. 2 : 1).
+                  Points are awarded only when both numbers are exactly right.
+                </p>
               </CardContent>
             </Card>
             <Card className="border-border">
               <CardHeader>
-                <CardTitle className="text-xl">Match Statistics</CardTitle>
+                <CardTitle className="text-xl">Goal Scorers</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                  <li>Possession %</li>
-                  <li>Shots On Target</li>
-                  <li>Expected Goals (xG)</li>
-                  <li>Yellow & Red Cards</li>
-                </ul>
+                <p className="text-sm text-muted-foreground">
+                  List the jersey numbers of the players who score, per team. Points are awarded
+                  when your set of scorers exactly matches the real scorers.
+                </p>
               </CardContent>
-            </Card>
-            <Card className="border-primary/50 bg-primary/5 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <BrainCircuit className="w-24 h-24" />
-              </div>
-              <CardHeader>
-                <CardTitle className="text-xl text-primary">Confidence Score</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Provide a confidence score representing how confident the model is in each prediction.</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="mt-8">
-            <Card className="bg-gradient-to-r from-primary/10 to-transparent border-primary/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-primary" /> Tournament Champion
-                </CardTitle>
-                <CardDescription className="text-base">Predict the team that will ultimately win the FIFA World Cup 2026.</CardDescription>
-              </CardHeader>
             </Card>
           </div>
         </div>
@@ -272,10 +234,10 @@ export default async function Home(props: { searchParams?: SearchParams }) {
             <div className="space-y-6">
               <h2 className="text-4xl font-bold tracking-tight">Scoring System</h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                The platform uses a weighted evaluation framework. Additional bonuses are awarded for highly confident and accurate predictions. Later-stage matches receive higher multipliers, meaning knockout-stage predictions become increasingly valuable.
+                Each match is scored on two things: the exact final score and the exact set of goal scorers. Later-stage matches receive higher multipliers, meaning knockout-stage predictions become increasingly valuable.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                {['Match Winner', 'Exact Scoreline', 'Goal Difference', 'Goal Scorers', 'Goal Counts', 'Match Statistics', 'Penalty Outcomes', 'Champion Prediction'].map((item) => (
+                {['Exact Scoreline', 'Exact Scorer Set'].map((item) => (
                   <div key={item} className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-primary" />
                     <span className="font-medium text-sm">{item}</span>
@@ -299,8 +261,6 @@ export default async function Home(props: { searchParams?: SearchParams }) {
                   </TableHeader>
                   <TableBody>
                     {[
-
-                      { stage: 'Round of 32', mult: '1.2x' },
                       { stage: 'Round of 16', mult: '1.5x' },
                       { stage: 'Quarter Final', mult: '2.0x' },
                       { stage: 'Semi Final', mult: '3.0x' },
@@ -393,9 +353,9 @@ export default async function Home(props: { searchParams?: SearchParams }) {
                       <Lock className="w-5 h-5 text-primary" /> Submission Rules
                     </h3>
                     <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
-                      <li>One submission per participant/team.</li>
-                      <li>Submission deadline is before the first match begins.</li>
-                      <li>No edits after submission. No resubmissions.</li>
+                      <li>One prediction set per participant.</li>
+                      <li>Submission deadline is before the knockout stage begins.</li>
+                      <li>You can re-upload to update your predictions any time before the deadline.</li>
                       <li>Invalid submissions will be rejected.</li>
                     </ul>
                   </div>
@@ -465,7 +425,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
                 <ChevronRight className="w-5 h-5 text-muted-foreground group-open:rotate-90 transition-transform" />
               </summary>
               <div className="mt-4 text-muted-foreground text-sm pt-4 border-t border-border">
-                <p><strong>No.</strong> All submissions are permanently locked once accepted.</p>
+                <p><strong>Yes.</strong> You can re-upload to update your predictions any time before the deadline. After the deadline they are locked.</p>
               </div>
             </details>
 
@@ -475,7 +435,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
                 <ChevronRight className="w-5 h-5 text-muted-foreground group-open:rotate-90 transition-transform" />
               </summary>
               <div className="mt-4 text-muted-foreground text-sm pt-4 border-t border-border">
-                <p><strong>One submission</strong> per participant/team.</p>
+                <p>One prediction set per participant, which you can re-upload to update any time before the deadline.</p>
               </div>
             </details>
 

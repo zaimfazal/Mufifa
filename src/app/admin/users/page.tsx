@@ -28,7 +28,7 @@ export default async function UsersPage() {
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
-          <p className="text-muted-foreground">View participants, teams, and submission statuses.</p>
+          <p className="text-muted-foreground">View participants, nicknames, and submission statuses.</p>
         </div>
         <Button variant="outline">Export CSV</Button>
       </div>

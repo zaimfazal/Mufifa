@@ -17,7 +17,7 @@ export function UsersClient({ formattedData }: { formattedData: any[] }) {
     },
     {
       accessorKey: 'team_name',
-      header: 'Team',
+      header: 'Nickname',
       cell: ({ row }) => <div className="text-secondary">{row.getValue('team_name')}</div>
     },
     {

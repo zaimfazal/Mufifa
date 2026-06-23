@@ -1,6 +1,6 @@
 import Papa from 'papaparse'
-import { CsvRow, GoalScorer } from '@/types/predictions'
-import { CSV_COLUMNS, LEGACY_CSV_COLUMNS } from '../constants'
+import { CsvRow, GoalScorer, LimitedCsvRow } from '@/types/predictions'
+import { CSV_COLUMNS, CSV_LIMITED_COLUMNS, LEGACY_CSV_COLUMNS } from '../constants'
 
 type RawCsvRow = Record<string, string | undefined>
 type CsvStringColumn = Exclude<keyof CsvRow, '__requiresChampion'>
@@ -101,6 +101,67 @@ export function parseCsvText(text: string): { rows: CsvRow[]; errors: string[] }
   const rows = normalizeRows(result.data as RawCsvRow[], uploadedColumns)
 
   return { rows, errors }
+}
+
+// --- Limited mode (exact score + scorer jersey numbers) --------------------
+
+/** True if the uploaded CSV is a limited-mode file (has scorer jersey columns). */
+export function isLimitedCsvText(text: string): boolean {
+  const firstLine = text.replace(/^﻿/, '').split(/\r?\n/, 1)[0] || ''
+  const headers = firstLine.split(',').map(h => h.trim())
+  return headers.includes('predicted_scorers_home')
+}
+
+export function parseLimitedCsvText(text: string): { rows: LimitedCsvRow[]; errors: string[] } {
+  const result = Papa.parse(text, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: (header) => header.replace(/^﻿/, '').trim(),
+  })
+
+  const errors: string[] = []
+  const uploadedColumns = result.meta.fields || []
+  const missingColumns = CSV_LIMITED_COLUMNS.filter(col => !uploadedColumns.includes(col))
+  if (missingColumns.length > 0) {
+    errors.push(`Missing required columns: ${missingColumns.join(', ')}`)
+  }
+
+  const rows = (result.data as RawCsvRow[]).map((row) => {
+    const normalized: Record<string, string> = {}
+    CSV_LIMITED_COLUMNS.forEach((column) => {
+      normalized[column] = row[column]?.trim() || ''
+    })
+    return normalized as unknown as LimitedCsvRow
+  })
+
+  return { rows, errors }
+}
+
+/**
+ * Parse a semicolon/comma-separated list of jersey numbers into a unique,
+ * sorted number set. Returns { numbers, invalid } so the validator can flag
+ * non-integer entries. Duplicates are collapsed (a brace still lists once).
+ */
+export function parseJerseyNumbers(str: string): { numbers: number[]; invalid: string[] } {
+  const numbers: number[] = []
+  const invalid: string[] = []
+  const seen = new Set<number>()
+  if (!str || str.trim() === '') return { numbers, invalid }
+
+  for (const part of str.split(/[;,]/)) {
+    const trimmed = part.trim()
+    if (!trimmed) continue
+    if (!/^\d+$/.test(trimmed)) {
+      invalid.push(trimmed)
+      continue
+    }
+    const n = parseInt(trimmed, 10)
+    if (!seen.has(n)) {
+      seen.add(n)
+      numbers.push(n)
+    }
+  }
+  return { numbers: numbers.sort((a, b) => a - b), invalid }
 }
 
 export function parseGoalScorers(str: string): GoalScorer[] {

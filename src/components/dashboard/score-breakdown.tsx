@@ -12,33 +12,40 @@ interface ScoreBreakdownProps {
   champion: number
   confidence: number
   totalMatches: number
+  tier1Only?: boolean
 }
 
-export function ScoreBreakdown({ winner, scoreline, scorer, stats, champion, confidence, totalMatches }: ScoreBreakdownProps) {
+export function ScoreBreakdown({ winner, scoreline, scorer, stats, champion, confidence, totalMatches, tier1Only = false }: ScoreBreakdownProps) {
   // The leaderboard stores earned category scores; these caps reflect the configured tournament-wide maximums dynamically.
+  // In Tier-1-only mode the Stats cap drops to the Tier-1 stats (possession + shots + xG = 30/match).
   const MAX_VALUES = {
     winner: totalMatches * 20,
     scoreline: totalMatches * 40,
-    scorer: totalMatches * 35,
+    // Limited mode caps scorers at the exact-set value (25); full mode uses the per-scorer model.
+    scorer: totalMatches * (tier1Only ? 25 : 35),
     stats: totalMatches * 45,
-    champion: 250,
+    champion: 100,
     confidence: totalMatches * 10
   }
-  const categories = [
-    { name: 'Outcome', earned: winner, max: MAX_VALUES.winner, color: 'bg-green-500' },
-    { name: 'Scoreline', earned: scoreline, max: MAX_VALUES.scoreline, color: 'bg-blue-500' },
-    { name: 'Scorers', earned: scorer, max: MAX_VALUES.scorer, color: 'bg-amber-500' },
-    { name: 'Stats', earned: stats, max: MAX_VALUES.stats, color: 'bg-purple-500' },
-    { name: 'Champion', earned: champion, max: MAX_VALUES.champion, color: 'bg-pink-500' },
+  // Limited mode scores only the exact Scoreline and the Scorers set; the rest are hidden.
+  const allCategories = [
+    { name: 'Outcome', earned: winner, max: MAX_VALUES.winner, color: 'bg-green-500', restricted: false },
+    { name: 'Scoreline', earned: scoreline, max: MAX_VALUES.scoreline, color: 'bg-blue-500', restricted: true },
+    { name: 'Scorers', earned: scorer, max: MAX_VALUES.scorer, color: 'bg-amber-500', restricted: true },
+    { name: 'Stats', earned: stats, max: MAX_VALUES.stats, color: 'bg-purple-500', restricted: false },
+    { name: 'Champion', earned: champion, max: MAX_VALUES.champion, color: 'bg-pink-500', restricted: false },
   ]
+  const categories = tier1Only ? allCategories.filter(c => c.restricted) : allCategories
 
   const chartData = categories.map(c => ({
     name: c.name,
     Score: c.earned
   }))
 
-  // Add confidence separately since it can be negative
-  chartData.push({ name: 'Confidence', Score: confidence })
+  // Add confidence separately since it can be negative (not scored in Tier-1-only mode)
+  if (!tier1Only) {
+    chartData.push({ name: 'Confidence', Score: confidence })
+  }
 
   return (
     <div className="space-y-8">
@@ -62,20 +69,22 @@ export function ScoreBreakdown({ winner, scoreline, scorer, stats, champion, con
             </Card>
           )
         })}
-        <Card className="glass-panel border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase">Confidence Impact</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline space-x-2">
-              <span className={`text-2xl font-bold font-mono ${confidence > 0 ? 'text-green-500' : confidence < 0 ? 'text-red-500' : ''}`}>
-                {confidence > 0 ? '+' : ''}{formatScore(confidence)}
-              </span>
-              <span className="text-sm text-muted-foreground">pts</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">Net points gained or lost from confidence markers.</p>
-          </CardContent>
-        </Card>
+        {!tier1Only && (
+          <Card className="glass-panel border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase">Confidence Impact</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline space-x-2">
+                <span className={`text-2xl font-bold font-mono ${confidence > 0 ? 'text-green-500' : confidence < 0 ? 'text-red-500' : ''}`}>
+                  {confidence > 0 ? '+' : ''}{formatScore(confidence)}
+                </span>
+                <span className="text-sm text-muted-foreground">pts</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">Net points gained or lost from confidence markers.</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Card className="glass-panel border-border/50">

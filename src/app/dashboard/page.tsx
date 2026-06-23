@@ -11,7 +11,7 @@ import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: "Dashboard | µFifa '26",
-  description: 'View your team statistics and predictions',
+  description: 'View your nickname statistics and predictions',
 }
 
 export default async function DashboardPage() {
@@ -49,7 +49,8 @@ export default async function DashboardPage() {
   
   const { count: totalMatches } = await supabase.from('matches').select('*', { count: 'exact', head: true })
 
-  const { data: settings } = await supabase.from('competition_settings').select('submission_deadline').single()
+  const { data: settings } = await supabase.from('competition_settings').select('submission_deadline, tier1_only_mode').single()
+  const tier1Only = settings?.tier1_only_mode === true
   const isClosed = settings?.submission_deadline ? new Date() > new Date(settings.submission_deadline) : false
 
   const { count: teamPredictionCount } = await supabase
@@ -108,6 +109,7 @@ export default async function DashboardPage() {
             champion={leaderboard?.champion_score || 0}
             confidence={leaderboard?.confidence_score || 0}
             totalMatches={totalMatches || 0}
+            tier1Only={tier1Only}
           />
         </div>
         <div className="lg:col-span-1 space-y-6">

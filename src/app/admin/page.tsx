@@ -35,7 +35,7 @@ export default async function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="glass-panel border-border/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase">Registered Teams</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase">Registered Nicknames</CardTitle>
             <Users className="w-4 h-4 text-accent" />
           </CardHeader>
           <CardContent>
