@@ -32,11 +32,9 @@ export function Podium({ topTeams }: PodiumProps) {
 
       {/* 1st Place */}
       {first && (
-        <Card className="w-full md:w-72 glass-panel border-yellow-500/50 shadow-[0_0_30px_rgba(234,179,8,0.3)] md:order-2 order-1 z-10 relative">
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2">
-            <Trophy className="w-12 h-12 text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.8)]" />
-          </div>
-          <CardContent className="p-8 pt-10 flex flex-col items-center text-center">
+        <Card className="w-full md:w-72 glass-panel border-yellow-500/50 shadow-[0_0_30px_rgba(234,179,8,0.3)] md:order-2 order-1 z-10">
+          <CardContent className="p-8 flex flex-col items-center text-center">
+            <Trophy className="w-12 h-12 text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.8)] mb-3" />
             <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center mb-4 border border-yellow-500/50 neon-box-green" style={{ boxShadow: '0 0 10px rgba(234,179,8,0.5)' }}>
               <span className="text-3xl font-black text-yellow-500">1</span>
             </div>

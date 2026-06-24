@@ -21,7 +21,7 @@ export async function getLeaderboard(page: number = 1, pageSize: number = 50, se
   const { data, count, error } = await query.range(from, to)
 
   if (error) {
-    console.error('Error fetching leaderboard:', error)
+    console.error('Error fetching leaderboard:', error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint)
     return { rows: [], totalCount: 0 }
   }
 

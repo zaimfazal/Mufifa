@@ -7,8 +7,7 @@ import { useState, useTransition } from 'react'
 import { signUp } from '@/actions/auth'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input'
-import 'react-phone-number-input/style.css'
+import { Eye, EyeOff } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -43,7 +42,10 @@ const KERALA_DISTRICTS = [
 
 const registerSchema = z.object({
   full_name: z.string().min(2, { message: 'Full name is required.' }),
-  phone_number: z.string().refine((val) => val && isValidPhoneNumber(val), { message: 'Valid international phone number is required.' }),
+  phone_number: z.string()
+    .min(10, { message: 'Phone number must be at least 10 digits.' })
+    .max(10, { message: 'Phone number must be exactly 10 digits.' })
+    .regex(/^\d+$/, { message: 'Phone number must contain only digits.' }),
   college: z.string().min(2, { message: 'College/Organization name is required.' }),
   district: z.string().min(1, { message: 'Please select a district.' }),
   mulearn_id: z.string()
@@ -60,6 +62,8 @@ const registerSchema = z.object({
 export function RegisterForm() {
   const [isPending, startTransition] = useTransition()
   const [success, setSuccess] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -81,7 +85,7 @@ export function RegisterForm() {
       formData.append('email', values.email)
       formData.append('password', values.password)
       formData.append('full_name', values.full_name)
-      formData.append('phone_number', values.phone_number)
+      formData.append('phone_number', `+91${values.phone_number}`)
       formData.append('college', values.college)
       formData.append('district', values.district)
       formData.append('mulearn_id', values.mulearn_id)
@@ -151,12 +155,18 @@ export function RegisterForm() {
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <PhoneInput 
-                        placeholder="+91 9876543210" 
-                        {...field} 
-                        defaultCountry="IN"
-                        className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      />
+                      <div className="flex h-10 w-full rounded-md border border-input bg-background/50 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                        <span className="flex items-center px-3 text-muted-foreground border-r border-input font-medium select-none">
+                          +91
+                        </span>
+                        <input
+                          type="tel"
+                          placeholder="9876543210"
+                          maxLength={10}
+                          {...field}
+                          className="flex-1 bg-transparent px-3 py-2 placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -241,7 +251,22 @@ export function RegisterForm() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} className="bg-background/50" />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          {...field}
+                          className="bg-background/50 pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -254,7 +279,22 @@ export function RegisterForm() {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} className="bg-background/50" />
+                      <div className="relative">
+                        <Input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          {...field}
+                          className="bg-background/50 pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((v) => !v)}
+                          className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
