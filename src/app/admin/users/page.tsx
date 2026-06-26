@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export const dynamic = 'force-dynamic'
 import { getUsers } from '@/actions/admin/users'
 import { Button } from '@/components/ui/button'
 import { Metadata } from 'next'

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { getMatches } from '@/actions/admin/matches'
 import { MatchForm } from '@/components/admin/match-form'
 import { Metadata } from 'next'

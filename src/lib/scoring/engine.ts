@@ -1,122 +1,38 @@
 import { Database } from '@/types/database'
 import { ScoringRule, MatchScoreResult } from '@/types/scoring'
-import { GoalScorer } from '@/types/predictions'
-import { SCORING_TOLERANCES } from '../constants'
 import { normalizePlayerName } from '../csv/name-normalizer'
 
 type Prediction = Database['public']['Tables']['predictions']['Row']
 type Actual = Database['public']['Tables']['actual_results']['Row']
 
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalize a winner value ("home", "away", "draw", or a team name) to a
+ * canonical form so comparisons work regardless of how the user expressed it.
+ */
 function normalizeOutcome(value: string | null, actual: Actual): string | null {
   if (!value) return null
   const normalized = value.trim().toLowerCase()
   if (normalized === 'draw') return 'draw'
   if (normalized === 'home' || normalized === 'away') return normalized
 
-  const match = (actual as Actual & { matches?: { home_team?: string | null; away_team?: string | null } | null }).matches
+  const match = (
+    actual as Actual & {
+      matches?: { home_team?: string | null; away_team?: string | null } | null
+    }
+  ).matches
   if (match?.home_team && normalized === match.home_team.trim().toLowerCase()) return 'home'
   if (match?.away_team && normalized === match.away_team.trim().toLowerCase()) return 'away'
 
   return normalized
 }
 
-export function calculateOutcomeScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>) {
-  const predictedWinner = normalizeOutcome(prediction.winner, actual)
-  const actualWinner = normalizeOutcome(actual.winner, actual)
+type JerseyObj = { home?: unknown; away?: unknown }
 
-  if (actualWinner === 'draw' && predictedWinner === 'draw') {
-    return { points: rules['correct_draw']?.points || 0, type: 'draw' }
-  }
-  if (actualWinner !== 'draw' && predictedWinner === actualWinner) {
-    return { points: rules['correct_winner']?.points || 0, type: 'winner' }
-  }
-  return { points: 0, type: 'none' }
-}
-
-function getFinalScore(record: { home_score: number | null, away_score: number | null, extra_time_home: number | null, extra_time_away: number | null }) {
-  if (record.extra_time_home !== null && record.extra_time_away !== null) {
-    return { home: record.extra_time_home, away: record.extra_time_away }
-  }
-  return { home: record.home_score, away: record.away_score }
-}
-
-export function calculateScorelineScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>) {
-  if (prediction.home_score === null || prediction.away_score === null || 
-      actual.home_score === null || actual.away_score === null) return 0
-
-  const pScore = getFinalScore(prediction)
-  const aScore = getFinalScore(actual)
-  
-  if (pScore.home === null || pScore.away === null || aScore.home === null || aScore.away === null) return 0
-
-  if (pScore.home === aScore.home && pScore.away === aScore.away) {
-    return rules['exact_scoreline']?.points || 0
-  }
-
-  const predDiff = pScore.home - pScore.away
-  const actualDiff = aScore.home - aScore.away
-
-  if (predDiff === actualDiff) {
-    return rules['correct_goal_difference']?.points || 0
-  }
-
-  if (pScore.home === aScore.home || pScore.away === aScore.away) {
-    return rules['one_team_score_correct']?.points || 0
-  }
-
-  return 0
-}
-
-export function calculateScorerScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>) {
-  let points = 0
-  if (!prediction.goal_scorers || !actual.goal_scorers) return 0
-
-  const isOwnGoal = (name: string) => name.toLowerCase().includes('own goal') || name.toLowerCase() === 'og'
-  
-  const predScorers = (prediction.goal_scorers as GoalScorer[]).filter(s => !isOwnGoal(s.name))
-  const actualScorers = (actual.goal_scorers as GoalScorer[]).filter(s => !isOwnGoal(s.name))
-  const actualPlayerNames = actualScorers.map(s => s.name)
-
-  let allPerfect = true
-  let foundAny = false
-
-  for (const ps of predScorers) {
-    const normalizedName = normalizePlayerName(ps.name, actualPlayerNames, 3)
-    if (normalizedName) {
-      foundAny = true
-      points += rules['correct_scorer']?.points || 0
-      
-      const actualScorer = actualScorers.find(a => a.name === normalizedName)
-      if (actualScorer && actualScorer.goals === ps.goals) {
-        points += rules['correct_goal_count']?.points || 0
-      } else {
-        allPerfect = false
-      }
-    } else {
-      allPerfect = false
-    }
-  }
-
-  // Exact list check: predicted all correctly and didn't predict extra, and didn't miss any
-  if (foundAny && allPerfect && predScorers.length === actualScorers.length) {
-    points += rules['exact_scorer_list']?.points || 0
-  }
-
-  if (prediction.first_goal_scorer && actual.first_goal_scorer) {
-    const normalizedFirst = normalizePlayerName(prediction.first_goal_scorer, [actual.first_goal_scorer], 3)
-    if (normalizedFirst) {
-      points += rules['first_goal_scorer']?.points || 0
-    }
-  }
-
-  return points
-}
-
-// Limited-mode scorers are stored as per-team jersey-number sets:
-//   { home: number[], away: number[] }
-// No goal counts: a number appears at most once and means "this player scored".
-type JerseyScorers = { home?: unknown[]; away?: unknown[] }
-
+/** Convert an unknown array-like value to a de-duped Set<number>. */
 function toJerseySet(value: unknown): Set<number> {
   const arr = Array.isArray(value) ? value : []
   const set = new Set<number>()
@@ -127,236 +43,211 @@ function toJerseySet(value: unknown): Set<number> {
   return set
 }
 
-function setsEqual(a: Set<number>, b: Set<number>): boolean {
-  if (a.size !== b.size) return false
-  for (const n of a) if (!b.has(n)) return false
-  return true
+/** Extract the jersey-number set for one side from a goal_scorers JSONB value. */
+function getJerseySet(goalScorers: unknown, side: 'home' | 'away'): Set<number> {
+  if (!goalScorers || typeof goalScorers !== 'object' || Array.isArray(goalScorers)) {
+    return new Set()
+  }
+  return toJerseySet((goalScorers as JerseyObj)[side])
 }
 
-// Exact-set scorer scoring for limited mode: full points only if the predicted
-// jersey-number set matches the actual set for BOTH teams (no missing, no extra).
-// An empty set on both sides (a correctly predicted 0-0) counts as correct.
-export function calculateExactScorersScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>): number {
-  const pred = (prediction.goal_scorers ?? { home: [], away: [] }) as JerseyScorers
-  const act = (actual.goal_scorers ?? { home: [], away: [] }) as JerseyScorers
+// ---------------------------------------------------------------------------
+// Rule 7 / 8 — fractional scorer matching
+// ---------------------------------------------------------------------------
 
-  const predHome = toJerseySet(pred.home)
-  const predAway = toJerseySet(pred.away)
-  const actHome = toJerseySet(act.home)
-  const actAway = toJerseySet(act.away)
-
-  if (setsEqual(predHome, actHome) && setsEqual(predAway, actAway)) {
-    return rules['exact_scorers']?.points || 0
-  }
-  return 0
+interface ScorerResult {
+  points: number
+  /** true only when fraction == 1.0 AND predicted-count == actual-count */
+  perfect: boolean
 }
 
-export function calculateStatsScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>) {
-  let points = 0
+/**
+ * Fractional scorer credit for one side.
+ *
+ * credit = (# correct predicted jersey numbers / total predicted jersey numbers) × full marks
+ *
+ * Validity check: if predicted-count > predicted-goals → 0 pts (shouldn't
+ * happen after submission validation, but we guard anyway).
+ *
+ * 0-0 case: both sets empty → full marks (perfect prediction).
+ */
+function scorerMatchPoints(
+  prediction: Prediction,
+  actual: Actual,
+  rules: Record<string, ScoringRule>,
+  side: 'home' | 'away'
+): ScorerResult {
+  const fullMarks = rules[`scorer_match_${side}`]?.points || 0
+  if (fullMarks === 0) return { points: 0, perfect: false }
 
-  const safeDiff = (a: number, b: number) => Number(Math.abs(a - b).toFixed(4))
+  const predictedGoals =
+    side === 'home' ? (prediction.home_score ?? 0) : (prediction.away_score ?? 0)
 
-  if (prediction.possession_home !== null && actual.possession_home !== null) {
-    if (safeDiff(prediction.possession_home, actual.possession_home) <= SCORING_TOLERANCES.possession) {
-      points += rules['possession_accuracy']?.points || 0
-    }
+  const predSet = getJerseySet(prediction.goal_scorers, side)
+  const actSet = getJerseySet(actual.goal_scorers, side)
+
+  // Validity guard
+  if (predSet.size > predictedGoals) return { points: 0, perfect: false }
+
+  // 0-0: both sides have no scorers → perfect
+  if (predSet.size === 0 && actSet.size === 0) return { points: fullMarks, perfect: true }
+
+  // No scorers predicted but actual has some (gating should prevent this)
+  if (predSet.size === 0) return { points: 0, perfect: false }
+
+  let correct = 0
+  for (const n of predSet) {
+    if (actSet.has(n)) correct++
   }
 
-  if (prediction.shots_home !== null && actual.shots_home !== null && prediction.shots_away !== null && actual.shots_away !== null) {
-    if (safeDiff(prediction.shots_home, actual.shots_home) <= SCORING_TOLERANCES.shots &&
-        safeDiff(prediction.shots_away, actual.shots_away) <= SCORING_TOLERANCES.shots) {
-      points += rules['shots_accuracy']?.points || 0
-    }
-  }
+  const fraction = correct / predSet.size
+  // perfect = every predicted jersey is correct AND no actual jerseys were missed
+  const perfect = fraction === 1.0 && predSet.size === actSet.size
 
-  if (prediction.xg_home !== null && actual.xg_home !== null && prediction.xg_away !== null && actual.xg_away !== null) {
-    if (safeDiff(prediction.xg_home, actual.xg_home) <= SCORING_TOLERANCES.xg &&
-        safeDiff(prediction.xg_away, actual.xg_away) <= SCORING_TOLERANCES.xg) {
-      points += rules['xg_accuracy']?.points || 0
-    }
-  }
-
-  if (prediction.yellow_home !== null && actual.yellow_home !== null && prediction.yellow_away !== null && actual.yellow_away !== null) {
-    if (safeDiff(prediction.yellow_home, actual.yellow_home) <= SCORING_TOLERANCES.yellowCards &&
-        safeDiff(prediction.yellow_away, actual.yellow_away) <= SCORING_TOLERANCES.yellowCards) {
-      points += rules['yellow_cards_accuracy']?.points || 0
-    }
-  }
-
-  if (prediction.red_home !== null && actual.red_home !== null && prediction.red_away !== null && actual.red_away !== null) {
-    if (prediction.red_home === actual.red_home && prediction.red_away === actual.red_away) {
-      points += rules['red_cards_exact']?.points || 0
-    }
-  }
-
-  return points
+  return { points: fraction * fullMarks, perfect }
 }
 
-export function calculatePenaltyScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>) {
-  if (actual.penalty_home === null && actual.penalty_away === null) return 0
-  let points = 0
+// ---------------------------------------------------------------------------
+// Max-possible per match
+// ---------------------------------------------------------------------------
 
-  // Penalty winner
-  const actualPenWinner = (actual.penalty_home || 0) > (actual.penalty_away || 0) ? 'home' : 'away'
-  const predPenWinner = (prediction.penalty_home || 0) > (prediction.penalty_away || 0) ? 'home' : 
-                        ((prediction.penalty_away || 0) > (prediction.penalty_home || 0) ? 'away' : null)
-
-  if (predPenWinner === actualPenWinner) {
-    points += rules['penalty_winner']?.points || 0
-  }
-
-  if (prediction.penalty_home === actual.penalty_home && prediction.penalty_away === actual.penalty_away) {
-    points += rules['penalty_score']?.points || 0
-  }
-
-  return points
+export function calculateMaxPossibleScore(
+  rules: Record<string, ScoringRule>,
+  multiplier: number
+): number {
+  const KEYS = [
+    'home_team_correct',
+    'away_team_correct',
+    'predicted_winner_correct',
+    'home_goals_correct',
+    'away_goals_correct',
+    'goal_difference_correct',
+    'scorer_match_home',
+    'scorer_match_away',
+    'all_correct_bonus',
+  ]
+  const perMatchMax = KEYS.reduce((sum, k) => sum + (rules[k]?.points || 0), 0)
+  return perMatchMax * multiplier
 }
 
-export function calculateConfidenceScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>) {
-  if (prediction.confidence === null || prediction.confidence <= 80) return 0
+// ---------------------------------------------------------------------------
+// Main match scoring function (new 9-rule system)
+// ---------------------------------------------------------------------------
 
+/**
+ * Score one prediction against one actual result using the 9 new rules.
+ *
+ * Breakdown columns are mapped to the existing leaderboard DB columns so no
+ * schema migration is needed:
+ *   outcome   ← home_team_correct + away_team_correct + predicted_winner_correct
+ *   scoreline ← home_goals_correct + away_goals_correct + goal_difference_correct
+ *   scorer    ← scorer_match_home  + scorer_match_away  + all_correct_bonus
+ *   stats / penalty / confidence → always 0 (rules disabled)
+ */
+export function calculateMatchScore(
+  prediction: Prediction,
+  actual: Actual,
+  rules: Record<string, ScoringRule>,
+  multiplier: number
+): MatchScoreResult {
+  // ── Rules 1 & 2: home_team_correct / away_team_correct ───────────────────
+  // The submission template is generated from the DB and team names are
+  // validated at upload time, so these are always satisfied.
+  const homeTeamPts = rules['home_team_correct']?.points || 0
+  const awayTeamPts = rules['away_team_correct']?.points || 0
+
+  // ── Rule 3: predicted_winner_correct (gated on 1+2, always true) ─────────
   const predictedWinner = normalizeOutcome(prediction.winner, actual)
   const actualWinner = normalizeOutcome(actual.winner, actual)
-  const isWinnerCorrect = (actualWinner !== 'draw' && predictedWinner === actualWinner) ||
-                          (actualWinner === 'draw' && predictedWinner === 'draw')
+  const winnerCorrect =
+    predictedWinner !== null && actualWinner !== null && predictedWinner === actualWinner
+  const winnerPts = winnerCorrect ? (rules['predicted_winner_correct']?.points || 0) : 0
 
-  if (isWinnerCorrect) {
-    return rules['confidence_bonus']?.points || 0
-  } else {
-    return rules['confidence_penalty']?.points || 0
-  }
-}
+  // ── Rules 4 & 5: home_goals_correct / away_goals_correct (gated on 1+2) ──
+  const homeGoalsCorrect =
+    prediction.home_score !== null &&
+    actual.home_score !== null &&
+    prediction.home_score === actual.home_score
+  const awayGoalsCorrect =
+    prediction.away_score !== null &&
+    actual.away_score !== null &&
+    prediction.away_score === actual.away_score
+  const homeGoalsPts = homeGoalsCorrect ? (rules['home_goals_correct']?.points || 0) : 0
+  const awayGoalsPts = awayGoalsCorrect ? (rules['away_goals_correct']?.points || 0) : 0
 
-export function calculateMaxPossibleScore(rules: Record<string, ScoringRule>, multiplier: number, actual: Actual, tier1Only = false): number {
-  let max = 0
-  const hasPenalties = actual.penalty_home !== null || actual.penalty_away !== null
-
-  // Limited mode: only exact scoreline + exact scorer set are achievable.
-  if (tier1Only) {
-    max += (rules['exact_scoreline']?.points || 0) + (rules['exact_scorers']?.points || 0)
-    return max * multiplier
-  }
-
-  // Best outcome
-  max += Math.max(rules['correct_winner']?.points || 0, rules['correct_draw']?.points || 0)
-  // Best scoreline
-  max += rules['exact_scoreline']?.points || 0
-
-  // Best scorer dynamically calculated based on actual match scorers
-  const actualScorers = actual.goal_scorers
-    ? (actual.goal_scorers as GoalScorer[]).filter(s => !s.name.toLowerCase().includes('own goal') && s.name.toLowerCase() !== 'og')
-    : []
-
-  if (actualScorers.length > 0) {
-    const scorerCount = actualScorers.length
-    max += scorerCount * (rules['correct_scorer']?.points || 0)
-    max += scorerCount * (rules['correct_goal_count']?.points || 0)
-    max += rules['exact_scorer_list']?.points || 0
-  }
-
-  if (actual.first_goal_scorer) {
-    max += rules['first_goal_scorer']?.points || 0
-  }
-
-  // Best stats
-  max += (rules['possession_accuracy']?.points || 0) + (rules['shots_accuracy']?.points || 0) + (rules['xg_accuracy']?.points || 0) + (rules['yellow_cards_accuracy']?.points || 0) + (rules['red_cards_exact']?.points || 0)
-
-  // Penalties
-  if (hasPenalties) {
-    max += (rules['penalty_winner']?.points || 0) + (rules['penalty_score']?.points || 0)
-  }
-
-  // Confidence
-  max += rules['confidence_bonus']?.points || 0
-
-  return max * multiplier
-}
-
-export function calculateMatchScore(prediction: Prediction, actual: Actual, rules: Record<string, ScoringRule>, multiplier: number, tier1Only = false): MatchScoreResult {
-  const predictedWinner = normalizeOutcome(prediction.winner, actual)
-  
-  // BRACKET BUST CHECK:
-  // If the predicted winner is a string that did not normalize to 'home', 'away', or 'draw',
-  // it means they predicted a specific team that is NOT playing in this actual match.
-  const isBracketBust = predictedWinner !== null && 
-                        predictedWinner !== 'home' && 
-                        predictedWinner !== 'away' && 
-                        predictedWinner !== 'draw'
-
-  if (isBracketBust) {
-    return {
-      total: 0,
-      multipliedTotal: 0,
-      breakdown: {
-        outcome: 0,
-        scoreline: 0,
-        scorer: 0,
-        stats: 0,
-        penalty: 0,
-        confidence: 0
-      },
-      multiplier,
-      maxPossible: calculateMaxPossibleScore(rules, multiplier, actual, tier1Only)
+  // ── Rule 6: goal_difference_correct (gated on 1+2+3) ─────────────────────
+  let goalDiffPts = 0
+  if (
+    winnerCorrect &&
+    prediction.home_score !== null &&
+    prediction.away_score !== null &&
+    actual.home_score !== null &&
+    actual.away_score !== null
+  ) {
+    const predDiff = prediction.home_score - prediction.away_score
+    const actualDiff = actual.home_score - actual.away_score
+    if (predDiff === actualDiff) {
+      goalDiffPts = rules['goal_difference_correct']?.points || 0
     }
   }
 
-  // Limited mode scores ONLY two things, both all-or-nothing:
-  //   - exact scoreline (both numbers must match)
-  //   - exact scorer jersey-number set per team
-  // Everything else (outcome, stats, penalties, confidence) is zero here.
-  if (tier1Only) {
-    const exactScore = (prediction.home_score !== null && prediction.away_score !== null &&
-                        prediction.home_score === actual.home_score &&
-                        prediction.away_score === actual.away_score)
-      ? (rules['exact_scoreline']?.points || 0)
-      : 0
-    const exactScorers = calculateExactScorersScore(prediction, actual, rules)
-
-    const baseTotal = exactScore + exactScorers
-    return {
-      total: baseTotal,
-      multipliedTotal: baseTotal * multiplier,
-      breakdown: {
-        outcome: 0,
-        scoreline: exactScore * multiplier,
-        scorer: exactScorers * multiplier,
-        stats: 0,
-        penalty: 0,
-        confidence: 0
-      },
-      multiplier,
-      maxPossible: calculateMaxPossibleScore(rules, multiplier, actual, tier1Only)
-    }
+  // ── Rules 7 & 8: scorer_match (gated on 4+5) ─────────────────────────────
+  let scorerHomePts = 0
+  let scorerHomePerfect = false
+  let scorerAwayPts = 0
+  let scorerAwayPerfect = false
+  if (homeGoalsCorrect && awayGoalsCorrect) {
+    const homeRes = scorerMatchPoints(prediction, actual, rules, 'home')
+    scorerHomePts = homeRes.points
+    scorerHomePerfect = homeRes.perfect
+    const awayRes = scorerMatchPoints(prediction, actual, rules, 'away')
+    scorerAwayPts = awayRes.points
+    scorerAwayPerfect = awayRes.perfect
   }
 
-  const outcome = calculateOutcomeScore(prediction, actual, rules).points
-  const stats = calculateStatsScore(prediction, actual, rules)
-  const scoreline = calculateScorelineScore(prediction, actual, rules)
-  const scorer = calculateScorerScore(prediction, actual, rules)
-  const penalty = calculatePenaltyScore(prediction, actual, rules)
-  const confidence = calculateConfidenceScore(prediction, actual, rules)
+  // ── Rule 9: all_correct_bonus ─────────────────────────────────────────────
+  const allCorrect =
+    winnerCorrect &&
+    homeGoalsCorrect &&
+    awayGoalsCorrect &&
+    scorerHomePerfect &&
+    scorerAwayPerfect
+  const allBonusPts = allCorrect ? (rules['all_correct_bonus']?.points || 0) : 0
 
-  const unmultipliedTotal = outcome + scoreline + scorer + stats + penalty + confidence
+  // ── Aggregate ─────────────────────────────────────────────────────────────
+  const outcomeScore = homeTeamPts + awayTeamPts + winnerPts
+  const scorelineScore = homeGoalsPts + awayGoalsPts + goalDiffPts
+  const scorerScore = scorerHomePts + scorerAwayPts + allBonusPts
+
+  const unmultipliedTotal = outcomeScore + scorelineScore + scorerScore
   const multipliedTotal = unmultipliedTotal * multiplier
-  const maxPossible = calculateMaxPossibleScore(rules, multiplier, actual, tier1Only)
+  const maxPossible = calculateMaxPossibleScore(rules, multiplier)
 
   return {
     total: unmultipliedTotal,
     multipliedTotal,
     breakdown: {
-      outcome: outcome * multiplier,
-      scoreline: scoreline * multiplier,
-      scorer: scorer * multiplier,
-      stats: stats * multiplier,
-      penalty: penalty * multiplier,
-      confidence: confidence * multiplier
+      outcome: outcomeScore * multiplier,
+      scoreline: scorelineScore * multiplier,
+      scorer: scorerScore * multiplier,
+      stats: 0,
+      penalty: 0,
+      confidence: 0,
     },
     multiplier,
-    maxPossible
+    maxPossible,
   }
 }
 
-export function calculateChampionScore(predicted: string, actual: string, rules: Record<string, ScoringRule>) {
+// ---------------------------------------------------------------------------
+// Champion prediction (unchanged)
+// ---------------------------------------------------------------------------
+
+export function calculateChampionScore(
+  predicted: string,
+  actual: string,
+  rules: Record<string, ScoringRule>
+): number {
   if (!predicted || !actual) return 0
   if (normalizePlayerName(predicted, [actual], 3)) {
     return rules['champion_prediction']?.points || 0

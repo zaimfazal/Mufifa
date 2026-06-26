@@ -17,25 +17,8 @@ const resultSchema = z.object({
   winner: z.string(),
   home_score: z.coerce.number().min(0),
   away_score: z.coerce.number().min(0),
-  possession_home: z.coerce.number().min(0).max(100),
-  possession_away: z.coerce.number().min(0).max(100),
-  shots_home: z.coerce.number().min(0),
-  shots_away: z.coerce.number().min(0),
-  xg_home: z.coerce.number().min(0),
-  xg_away: z.coerce.number().min(0),
-  yellow_home: z.coerce.number().min(0),
-  yellow_away: z.coerce.number().min(0),
-  red_home: z.coerce.number().min(0),
-  red_away: z.coerce.number().min(0),
-  penalty_home: z.string().optional(),
-  penalty_away: z.string().optional(),
-  goal_scorers: z.string().optional(),
-  first_goal_scorer: z.string().optional(),
-}).refine(data => {
-  return data.possession_home + data.possession_away === 100
-}, {
-  message: "Possession must sum to 100",
-  path: ["possession_home"]
+  scorers_home: z.string().optional(),
+  scorers_away: z.string().optional(),
 })
 
 const limitedResultSchema = z.object({
@@ -74,16 +57,15 @@ function LimitedResultEntryForm({ match, existingResult }: { match: any, existin
     const formData = new FormData()
     formData.append('home_score', String(values.home_score))
     formData.append('away_score', String(values.away_score))
-    // Always send scorer fields (even empty) so the action takes the jersey path.
     formData.append('scorers_home', values.scorers_home ?? '')
     formData.append('scorers_away', values.scorers_away ?? '')
 
-    const res = await enterResult(match.id, formData)
-    if (res.error) {
-      toast.error(res.error)
-    } else {
-      toast.success('Result saved and scores recalculated!')
-      setExpanded(false)
+    try {
+      const res = await enterResult(match.id, formData)
+      // Only reaches here if redirect didn't happen (i.e. error)
+      if (res && res.error) toast.error(res.error)
+    } catch {
+      // redirect() throws a Next.js redirect — that's the success path, ignore it
     }
   }
 
@@ -130,8 +112,11 @@ function LimitedResultEntryForm({ match, existingResult }: { match: any, existin
 function FullResultEntryForm({ match, existingResult }: { match: any, existingResult?: any }) {
   const [expanded, setExpanded] = useState(!existingResult)
 
-  const defaultGoalScorers = existingResult?.goal_scorers 
-    ? existingResult.goal_scorers.map((g: any) => `${g.name}:${g.goals}`).join(';') 
+  const defaultScorersHome = Array.isArray(existingResult?.goal_scorers?.home)
+    ? existingResult.goal_scorers.home.join(';')
+    : ''
+  const defaultScorersAway = Array.isArray(existingResult?.goal_scorers?.away)
+    ? existingResult.goal_scorers.away.join(';')
     : ''
 
   const form = useForm<z.infer<typeof resultSchema>>({
@@ -140,38 +125,25 @@ function FullResultEntryForm({ match, existingResult }: { match: any, existingRe
       winner: existingResult?.winner || 'draw',
       home_score: existingResult?.home_score ?? 0,
       away_score: existingResult?.away_score ?? 0,
-      possession_home: existingResult?.possession_home ?? 50,
-      possession_away: existingResult?.possession_away ?? 50,
-      shots_home: existingResult?.shots_home ?? 0,
-      shots_away: existingResult?.shots_away ?? 0,
-      xg_home: existingResult?.xg_home ?? 0.0,
-      xg_away: existingResult?.xg_away ?? 0.0,
-      yellow_home: existingResult?.yellow_home ?? 0,
-      yellow_away: existingResult?.yellow_away ?? 0,
-      red_home: existingResult?.red_home ?? 0,
-      red_away: existingResult?.red_away ?? 0,
-      penalty_home: existingResult?.penalty_home?.toString() || '',
-      penalty_away: existingResult?.penalty_away?.toString() || '',
-      goal_scorers: defaultGoalScorers,
-      first_goal_scorer: existingResult?.first_goal_scorer || '',
+      scorers_home: defaultScorersHome,
+      scorers_away: defaultScorersAway,
     }
   })
 
   async function onSubmit(values: z.infer<typeof resultSchema>) {
     const formData = new FormData()
-    Object.entries(values).forEach(([k, v]) => {
-      if (v !== undefined && v !== null && v !== '') {
-        formData.append(k, String(v))
-      }
-    })
+    formData.append('winner', values.winner)
+    formData.append('home_score', String(values.home_score))
+    formData.append('away_score', String(values.away_score))
+    formData.append('scorers_home', values.scorers_home ?? '')
+    formData.append('scorers_away', values.scorers_away ?? '')
 
-    const res = await enterResult(match.id, formData)
-
-    if (res.error) {
-      toast.error(res.error)
-    } else {
-      toast.success('Result saved and scores recalculated!')
-      setExpanded(false)
+    try {
+      const res = await enterResult(match.id, formData)
+      // Only reaches here if redirect didn't happen (i.e. error)
+      if (res && res.error) toast.error(res.error)
+    } catch {
+      // redirect() throws a Next.js redirect — that's the success path, ignore it
     }
   }
 
@@ -221,68 +193,14 @@ function FullResultEntryForm({ match, existingResult }: { match: any, existingRe
           )} />
         </div>
 
-        {/* Scorers & Penalties */}
+        {/* Scorers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h4 className="font-semibold border-b border-border/50 pb-2">Player Events</h4>
-            <FormField control={form.control} name="goal_scorers" render={({ field }) => (
-              <FormItem><FormLabel>Goal Scorers (Format: &quot;Mbappe:2; Messi:1&quot;)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="first_goal_scorer" render={({ field }) => (
-              <FormItem><FormLabel>First Goal Scorer</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-          </div>
-          <div className="space-y-4">
-            <h4 className="font-semibold border-b border-border/50 pb-2">Penalties (If applicable)</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="penalty_home" render={({ field }) => (
-                <FormItem><FormLabel>{match.home_team} Penalties</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="penalty_away" render={({ field }) => (
-                <FormItem><FormLabel>{match.away_team} Penalties</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-            </div>
-          </div>
-        </div>
-
-        {/* Match Statistics */}
-        <div className="space-y-4">
-          <h4 className="font-semibold border-b border-border/50 pb-2">Match Statistics</h4>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <FormField control={form.control} name="possession_home" render={({ field }) => (
-              <FormItem><FormLabel>Possession H (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="possession_away" render={({ field }) => (
-              <FormItem><FormLabel>Possession A (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="shots_home" render={({ field }) => (
-              <FormItem><FormLabel>Shots H</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="xg_home" render={({ field }) => (
-              <FormItem><FormLabel>xG H</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="yellow_home" render={({ field }) => (
-              <FormItem><FormLabel>Yellow H</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="red_home" render={({ field }) => (
-              <FormItem><FormLabel>Red H</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-2">
-            <div className="col-span-2"></div>
-            <FormField control={form.control} name="shots_away" render={({ field }) => (
-              <FormItem><FormLabel>Shots A</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="xg_away" render={({ field }) => (
-              <FormItem><FormLabel>xG A</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="yellow_away" render={({ field }) => (
-              <FormItem><FormLabel>Yellow A</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="red_away" render={({ field }) => (
-              <FormItem><FormLabel>Red A</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-          </div>
+          <FormField control={form.control} name="scorers_home" render={({ field }) => (
+            <FormItem><FormLabel>{match.home_team} Scorers (e.g. 10;7)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="scorers_away" render={({ field }) => (
+            <FormItem><FormLabel>{match.away_team} Scorers (e.g. 9)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
         </div>
         
         <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 mt-4" disabled={form.formState.isSubmitting}>
@@ -292,5 +210,3 @@ function FullResultEntryForm({ match, existingResult }: { match: any, existingRe
     </Form>
   )
 }
-
-

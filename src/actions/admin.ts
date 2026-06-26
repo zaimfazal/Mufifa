@@ -69,7 +69,6 @@ export async function getAdminData() {
   const { count: teamCount } = await supabase.from('teams').select('*', { count: 'exact', head: true })
   const { count: submissionCount } = await supabase.from('submissions').select('*', { count: 'exact', head: true })
   const { data: matches } = await supabase.from('matches').select('*, actual_results(*)').order('kickoff_time')
-  const { data: rules } = await supabase.from('scoring_rules').select('*').order('rule_name')
 
   return {
     stats: {
@@ -77,7 +76,6 @@ export async function getAdminData() {
       submissions: submissionCount || 0,
     },
     matches: matches || [],
-    rules: rules || []
   }
 }
 

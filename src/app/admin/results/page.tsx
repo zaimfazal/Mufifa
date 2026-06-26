@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "Enter Results | Admin | µFifa '26"
 }
@@ -12,17 +14,18 @@ export const metadata: Metadata = {
 export default async function ResultsPage() {
   const supabase = createAdminClient()
 
-  // Fetch all matches that are live or completed (or scheduled if we want to allow early entry)
-  // Let's just fetch all matches and sort by kickoff
-  const { data: matches } = await supabase
-    .from('matches')
-    .select('*, actual_results(*)')
-    .order('kickoff_time', { ascending: false })
+  // Fetch matches and actual_results separately — more reliable than
+  // relying on the PostgREST embedded join which can fail when the
+  // schema cache is stale after column drops.
+  const [{ data: matches }, { data: actualResults }, { data: settings }] = await Promise.all([
+    supabase.from('matches').select('*').order('kickoff_time', { ascending: false }),
+    supabase.from('actual_results').select('*'),
+    supabase.from('competition_settings').select('tier1_only_mode').single(),
+  ])
 
-  const { data: settings } = await supabase
-    .from('competition_settings')
-    .select('tier1_only_mode')
-    .single()
+  // Build a lookup map: match_id → actual_result
+  const resultMap = new Map((actualResults || []).map(r => [r.match_id, r]))
+
   const limited = settings?.tier1_only_mode === true
 
   return (
@@ -34,8 +37,8 @@ export default async function ResultsPage() {
 
       <div className="space-y-4">
         {matches?.map((match: any) => {
-          const hasResult = match.actual_results && match.actual_results.length > 0
-          const actualResult = hasResult ? match.actual_results[0] : null
+          const actualResult = resultMap.get(match.id) || null
+          const hasResult = !!actualResult
           
           return (
             <Card key={match.id} className="glass-panel border-border/50">

@@ -18,16 +18,16 @@ export async function getScoringRules() {
   return data || []
 }
 
-export async function updateScoringRules(formData: FormData) {
+export async function updateScoringRules(formData: FormData): Promise<{ success?: boolean; error?: string }> {
   await requireAdmin()
   const supabase = createAdminClient()
   
-  const rulesToUpdate = []
+  const rulesToUpdate: { id: string; points: number; is_enabled: boolean; updated_at: string }[] = []
   
-  // Extract all inputs matching pattern rule_[id]_points
+  // Key format: rule_{uuid}_points  — use slice to capture the full UUID (split breaks on hyphens in some edge cases)
   for (const [key, value] of formData.entries()) {
     if (key.startsWith('rule_') && key.endsWith('_points')) {
-      const id = key.split('_')[1]
+      const id = key.slice('rule_'.length, key.length - '_points'.length)
       const points = parseInt(value as string)
       const isEnabled = formData.get(`rule_${id}_enabled`) === 'on'
       
@@ -41,17 +41,21 @@ export async function updateScoringRules(formData: FormData) {
   }
 
   for (const rule of rulesToUpdate) {
-    await supabase
+    const { error } = await supabase
       .from('scoring_rules')
       .update({ points: rule.points, is_enabled: rule.is_enabled, updated_at: rule.updated_at })
       .eq('id', rule.id)
+    if (error) return { error: `Failed to update rule: ${error.message}` }
   }
 
   await logAuditEvent('update_scoring_rules', 'scoring_rules', null, { updated_count: rulesToUpdate.length })
   
-  // Recalculate
+  // Recalculate with new weights
   await recalculateAll()
   
   revalidatePath('/admin/scoring')
   revalidatePath('/leaderboard')
+  revalidatePath('/dashboard')
+
+  return { success: true }
 }

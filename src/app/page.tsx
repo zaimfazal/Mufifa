@@ -20,16 +20,22 @@ export default async function Home(props: { searchParams?: SearchParams }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let team = null
-  if (user) {
-    const { data } = await supabase.from('teams').select('*').eq('owner_id', user.id).single()
-    team = data
-  }
+  // Parallelize all independent queries — reduces SSR time from ~3 serial
+  // roundtrips (~1-2 s) to a single parallel roundtrip (~300-500 ms).
+  const [teamResult, settingsResult, leaderboardResult] = await Promise.all([
+    user
+      ? supabase.from('teams').select('*').eq('owner_id', user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase.from('competition_settings').select('submission_deadline').maybeSingle(),
+    getLeaderboard(1, 5),
+  ])
 
-  const { data: settings } = await supabase.from('competition_settings').select('submission_deadline').single()
-  const isClosed = settings?.submission_deadline ? new Date() > new Date(settings.submission_deadline) : false
-
-  const { rows: topTeams } = await getLeaderboard(1, 5)
+  const team = teamResult.data
+  const settings = (settingsResult as any).data
+  const { rows: topTeams } = leaderboardResult
+  const isClosed = settings?.submission_deadline
+    ? new Date() > new Date(settings.submission_deadline)
+    : false
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-primary/20">

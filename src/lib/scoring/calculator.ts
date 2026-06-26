@@ -14,7 +14,6 @@ export async function recalculateAll() {
     { data: champPreds },
     { data: champActual },
     { data: submissions },
-    { data: settings }
   ] = await Promise.all([
     supabase.from('teams').select('id'),
     supabase.from('predictions').select('*'),
@@ -22,10 +21,7 @@ export async function recalculateAll() {
     supabase.from('champion_predictions').select('*'),
     supabase.from('analytics_cache').select('metric_value').eq('metric_key', 'tournament_champion').maybeSingle(),
     supabase.from('submissions').select('team_id, locked_at'),
-    supabase.from('competition_settings').select('tier1_only_mode').maybeSingle()
   ])
-
-  const tier1Only = settings?.tier1_only_mode === true
 
   if (!teams || teams.length === 0) return
 
@@ -73,7 +69,7 @@ export async function recalculateAll() {
         const pred = teamPreds.find(p => p.match_id === actual.match_id)
         if (pred) {
           const multiplier = (actual.matches as any).multiplier as number
-          const result = calculateMatchScore(pred, actual, rules, multiplier, tier1Only)
+          const result = calculateMatchScore(pred, actual, rules, multiplier)
 
           totalScore += result.multipliedTotal
           maxPossible += result.maxPossible
@@ -148,16 +144,12 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
     { data: actuals },
     { data: champPred },
     { data: champActual },
-    { data: settings }
   ] = await Promise.all([
     supabase.from('predictions').select('*').eq('team_id', teamId),
     supabase.from('actual_results').select('*, matches(multiplier, home_team, away_team)'),
     supabase.from('champion_predictions').select('champion').eq('team_id', teamId).maybeSingle(),
     supabase.from('analytics_cache').select('metric_value').eq('metric_key', 'tournament_champion').maybeSingle(),
-    supabase.from('competition_settings').select('tier1_only_mode').maybeSingle()
   ])
-
-  const tier1Only = settings?.tier1_only_mode === true
 
   let totalScore = 0
   let maxPossible = 0
@@ -175,7 +167,7 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
       const pred = predictions.find(p => p.match_id === actual.match_id)
       if (pred) {
         const multiplier = (actual.matches as any).multiplier as number
-        const result = calculateMatchScore(pred, actual, rules, multiplier, tier1Only)
+        const result = calculateMatchScore(pred, actual, rules, multiplier)
 
         totalScore += result.multipliedTotal
         maxPossible += result.maxPossible

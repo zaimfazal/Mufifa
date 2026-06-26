@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { logAuditEvent } from './audit'
 import { recalculateForMatch } from '@/lib/scoring/calculator'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { requireAdmin } from './require-admin'
 import { parseJerseyNumbers } from '@/lib/csv/parser'
 
@@ -20,12 +21,17 @@ export async function enterResult(matchId: string, formData: FormData) {
     return Number.isNaN(n) ? null : n
   }
 
-  const winner = (formData.get('winner') as string) || null
+  let winner = (formData.get('winner') as string) || null
   const homeScore = numOrNull('home_score')
   const awayScore = numOrNull('away_score')
 
-  const penaltyHome = numOrNull('penalty_home')
-  const penaltyAway = numOrNull('penalty_away')
+  // In limited mode the form doesn't post a 'winner' field — derive it from the scores.
+  if (!winner && homeScore !== null && awayScore !== null) {
+    if (homeScore > awayScore) winner = 'home'
+    else if (awayScore > homeScore) winner = 'away'
+    else winner = 'draw'
+  }
+
 
   // Goal scorers: limited mode posts jersey-number sets (scorers_home/away);
   // full mode posts the name-based "Player A:2;Player B:1" string.
@@ -49,28 +55,12 @@ export async function enterResult(matchId: string, formData: FormData) {
     goalScorers = list
   }
 
-  const firstGoalScorerRaw = formData.get('first_goal_scorer') as string
-  const firstGoalScorer = firstGoalScorerRaw ? firstGoalScorerRaw.trim() : null
-
   const { error } = await supabase.from('actual_results').upsert({
     match_id: matchId,
     winner,
     home_score: homeScore,
     away_score: awayScore,
-    possession_home: numOrNull('possession_home', true),
-    possession_away: numOrNull('possession_away', true),
-    shots_home: numOrNull('shots_home'),
-    shots_away: numOrNull('shots_away'),
-    xg_home: numOrNull('xg_home', true),
-    xg_away: numOrNull('xg_away', true),
-    yellow_home: numOrNull('yellow_home'),
-    yellow_away: numOrNull('yellow_away'),
-    red_home: numOrNull('red_home'),
-    red_away: numOrNull('red_away'),
-    penalty_home: penaltyHome,
-    penalty_away: penaltyAway,
     goal_scorers: goalScorers,
-    first_goal_scorer: firstGoalScorer,
     updated_by: adminUser.id,
     updated_at: new Date().toISOString()
   }, { onConflict: 'match_id' })
@@ -85,10 +75,10 @@ export async function enterResult(matchId: string, formData: FormData) {
 
   await logAuditEvent('enter_match_result', 'actual_results', matchId)
   
-  revalidatePath('/admin/results')
-  revalidatePath('/admin/matches')
-  revalidatePath('/leaderboard')
-  revalidatePath('/dashboard')
+  revalidatePath('/admin/results', 'page')
+  revalidatePath('/admin/matches', 'page')
+  revalidatePath('/leaderboard', 'page')
+  revalidatePath('/dashboard', 'page')
 
-  return { success: true }
+  redirect('/admin/results')
 }

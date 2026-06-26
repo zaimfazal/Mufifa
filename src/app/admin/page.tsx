@@ -1,16 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export const dynamic = 'force-dynamic'
 import { getAdminData } from '@/actions/admin'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { getStageMultipliers } from '@/actions/admin/stage-multipliers'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Users, FileSpreadsheet, ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
 import { RecalculateButton } from './recalculate-button'
+import { StageMultipliersCard } from '@/components/admin/stage-multipliers-card'
 
 export default async function AdminPage() {
   let data
+  let stageMultipliers: any[] = []
   try {
-    data = await getAdminData()
+    ;[data, stageMultipliers] = await Promise.all([getAdminData(), getStageMultipliers()])
   } catch {
     return (
       <div className="container mx-auto py-20 text-center">
@@ -21,7 +25,7 @@ export default async function AdminPage() {
     )
   }
 
-  const { stats, matches, rules } = data
+  const { stats, matches } = data
 
   return (
     <div className="container mx-auto py-10 px-4 space-y-8">
@@ -64,10 +68,10 @@ export default async function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Matches overview */}
         <Card className="glass-panel border-border/50">
           <CardHeader>
             <CardTitle>Matches</CardTitle>
-            <CardDescription>Manage match results to trigger scoring updates</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {matches.slice(0, 5).map((match: any) => (
@@ -87,25 +91,9 @@ export default async function AdminPage() {
           </CardContent>
         </Card>
 
-        <Card className="glass-panel border-border/50">
-          <CardHeader>
-            <CardTitle>Scoring Rules</CardTitle>
-            <CardDescription>Engine weights and points</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {rules.slice(0, 5).map((rule: any) => (
-              <div key={rule.id} className="flex justify-between items-center p-3 rounded-lg bg-background/50 border border-border/50">
-                <div className="text-sm font-medium">{rule.rule_name}</div>
-                <div className="font-mono text-accent">+{rule.points}</div>
-              </div>
-            ))}
-            <Link href="/admin/scoring" className="w-full block">
-              <Button variant="outline" className="w-full">Edit Scoring Weights</Button>
-            </Link>
-          </CardContent>
-        </Card>
+        {/* Stage Multipliers — editable inline */}
+        <StageMultipliersCard multipliers={stageMultipliers} />
       </div>
     </div>
   )
 }
-
