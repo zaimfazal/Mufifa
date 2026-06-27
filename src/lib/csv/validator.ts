@@ -49,7 +49,7 @@ function getValidMatchIds(validMatches: string[] | MatchReference[]) {
   return (validMatches as MatchReference[]).map(match => match.match_code)
 }
 
-function validateTeamName(row: CsvRow, rowNumber: number, matchRef: MatchReference | null, validTeams: Set<string>): ValidationError[] {
+function validateTeamName(row: CsvRow | LimitedCsvRow, rowNumber: number, matchRef: MatchReference | null, validTeams: Set<string>): ValidationError[] {
   const homeTeam = matchRef?.home_team || row.home_team
   const awayTeam = matchRef?.away_team || row.away_team
 
@@ -293,6 +293,13 @@ export function validateLimitedCsv(
 
   const seenMatches = new Set<string>()
   const validMatchIds = getValidMatchIds(validMatches)
+  const validTeams = new Set<string>()
+  if (validMatches.length > 0 && typeof validMatches[0] !== 'string') {
+    ;(validMatches as MatchReference[]).forEach(match => {
+      validTeams.add(normalizedText(match.home_team))
+      validTeams.add(normalizedText(match.away_team))
+    })
+  }
 
   rows.forEach((row, index) => {
     const rowNumber = index + 2 // 1-indexed + header
@@ -314,6 +321,17 @@ export function validateLimitedCsv(
       pushErr('match_id', `Duplicate prediction for match: ${row.match_id}`)
     }
     seenMatches.add(row.match_id)
+
+    if (!row.predicted_winner?.trim()) {
+      pushErr('predicted_winner', 'Predicted winner is required')
+    } else {
+      const matchRef = getMatchReference(validMatches, row.match_id)
+      const teamErrors = validateTeamName(row, rowNumber, matchRef, validTeams)
+      if (teamErrors.length > 0) {
+        result.valid = false
+        result.errors.push(...teamErrors)
+      }
+    }
 
     // Scores must be non-negative integers
     const homeValid = /^\d+$/.test(row.predicted_home_score)
@@ -348,7 +366,7 @@ export function validateLimitedCsv(
     if (result.valid) {
       result.predictions.push({
         match_id: row.match_id,
-        winner: null,
+        winner: row.predicted_winner,
         home_score: parseInt(row.predicted_home_score, 10),
         away_score: parseInt(row.predicted_away_score, 10),
         extra_time_home: null, extra_time_away: null,

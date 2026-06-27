@@ -145,7 +145,6 @@ export function parseLimitedCsvText(text: string): { rows: LimitedCsvRow[]; erro
 export function parseJerseyNumbers(str: string): { numbers: number[]; invalid: string[] } {
   const numbers: number[] = []
   const invalid: string[] = []
-  const seen = new Set<number>()
   if (!str || str.trim() === '') return { numbers, invalid }
 
   for (const part of str.split(/[;,]/)) {
@@ -156,10 +155,7 @@ export function parseJerseyNumbers(str: string): { numbers: number[]; invalid: s
       continue
     }
     const n = parseInt(trimmed, 10)
-    if (!seen.has(n)) {
-      seen.add(n)
-      numbers.push(n)
-    }
+    numbers.push(n)
   }
   return { numbers: numbers.sort((a, b) => a - b), invalid }
 }

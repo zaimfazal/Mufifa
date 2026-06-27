@@ -36,6 +36,7 @@ export interface LimitedCsvRow {
   match_id: string;
   home_team: string;
   away_team: string;
+  predicted_winner: string;
   predicted_home_score: string;
   predicted_away_score: string;
   predicted_scorers_home: string;

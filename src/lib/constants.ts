@@ -42,6 +42,7 @@ export const CSV_LIMITED_COLUMNS = [
   'match_id',
   'home_team',
   'away_team',
+  'predicted_winner',
   'predicted_home_score',
   'predicted_away_score',
   'predicted_scorers_home',
