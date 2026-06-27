@@ -36,11 +36,11 @@ export interface LimitedCsvRow {
   match_id: string;
   home_team: string;
   away_team: string;
-  predicted_winner: string;
   predicted_home_score: string;
   predicted_away_score: string;
   predicted_scorers_home: string;
   predicted_scorers_away: string;
+  predicted_winner: string;
 }
 
 // Limited-mode scorers, stored in the predictions.goal_scorers JSONB column.
