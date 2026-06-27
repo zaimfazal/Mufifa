@@ -11,9 +11,6 @@ export function Footer() {
           <Link href="/leaderboard" className="text-sm text-muted-foreground hover:text-accent transition-colors">
             Leaderboard
           </Link>
-          <Link href="/analytics" className="text-sm text-muted-foreground hover:text-secondary transition-colors">
-            Analytics
-          </Link>
         </div>
         <p className="text-sm text-muted-foreground hidden sm:block">
           &copy; {new Date().getFullYear()} µFifa &apos;26. All rights reserved.
