@@ -113,6 +113,7 @@ export function UsersClient({ formattedData }: { formattedData: any[] }) {
               >
                 {user.is_active ? 'Disable' : 'Enable'}
               </Button>
+            </form>
             <Button 
               variant="destructive" 
               size="sm" 
