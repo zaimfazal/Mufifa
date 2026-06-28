@@ -12,7 +12,7 @@ export default async function SettingsPage() {
   // Format date for datetime-local input (expects YYYY-MM-DDThh:mm)
   let formattedDeadline = ''
   if (settings.submission_deadline) {
-    formattedDeadline = new Date(settings.submission_deadline).toISOString().slice(0, 16)
+    formattedDeadline = settings.submission_deadline
   }
 
   return (
@@ -24,7 +24,7 @@ export default async function SettingsPage() {
 
       <SettingsForm
         initialDeadline={formattedDeadline}
-        initialRegistrationsOpen={settings.registrations_open ?? true}
+        initialSubmissionsOpen={settings.submissions_open ?? true}
         initialTier1Only={settings.tier1_only_mode ?? false}
       />
     </div>

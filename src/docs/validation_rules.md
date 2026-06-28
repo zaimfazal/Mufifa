@@ -37,7 +37,7 @@ This document outlines the strict validation rules for your predictions CSV file
 - Note: Goal-count syntax (`Name:Goals`) is optional but highly recommended. If omitted, the scoring engine may not award exact-goal-count bonus points.
 
 ## 5. Submission Deadline Rules
-- All predictions are locked as soon as the first match of the Round of 32 kicks off.
+- All predictions are locked as soon as the first match of the Round of 16 kicks off.
 - The platform enforces a strict deadline. Late submissions will be rejected by the server.
 - You can overwrite your predictions up until the deadline by simply uploading a new CSV.
 

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS stage_multipliers (
 
 -- Seed default multipliers
 INSERT INTO stage_multipliers (stage, stage_label, multiplier) VALUES
-  ('round_of_16',   'Round of 16',  1.5),
+  ('round_of_16',   'Round of 16',  1.0),
   ('quarter_final', 'Quarter Final', 2.0),
   ('semi_final',    'Semi Final',    3.0),
   ('third_place',   'Third Place',   2.5),

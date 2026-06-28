@@ -12,7 +12,7 @@ export async function getCompetitionSettings() {
   
   if (error) {
     console.error('Error fetching settings:', error)
-    return { submission_deadline: null, registrations_open: true }
+    return { submission_deadline: null, submissions_open: true }
   }
   return data
 }
@@ -21,10 +21,10 @@ export async function updateCompetitionSettings(formData: FormData) {
   await requireAdmin()
   const supabase = createAdminClient()
   
-  const rawDeadline = formData.get('submission_deadline') as string
-  const submissionDeadline = rawDeadline ? new Date(rawDeadline).toISOString() : null
+  const rawDeadline = formData.get('submission_deadline_iso') as string
+  const submissionDeadline = rawDeadline ? rawDeadline : null
   
-  const registrationsOpen = formData.get('registrations_open') === 'on'
+  const submissionsOpen = formData.get('submissions_open') === 'on'
   const tier1OnlyMode = formData.get('tier1_only_mode') === 'on'
 
   // Detect a change to the scoring mode so we only trigger a (heavy) full
@@ -39,7 +39,7 @@ export async function updateCompetitionSettings(formData: FormData) {
     .from('competition_settings')
     .update({
       submission_deadline: submissionDeadline,
-      registrations_open: registrationsOpen,
+      submissions_open: submissionsOpen,
       tier1_only_mode: tier1OnlyMode,
       updated_at: new Date().toISOString()
     })
@@ -47,7 +47,7 @@ export async function updateCompetitionSettings(formData: FormData) {
 
   if (error) throw new Error(error.message)
 
-  await logAuditEvent('update_settings', 'competition_settings', null, { submissionDeadline, registrationsOpen, tier1OnlyMode })
+  await logAuditEvent('update_settings', 'competition_settings', null, { submissionDeadline, submissionsOpen, tier1OnlyMode })
 
   // Scoring mode change alters every score, so recompute the leaderboard.
   if (modeChanged) {

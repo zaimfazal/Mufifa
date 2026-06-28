@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const dynamic = 'force-dynamic'
 import { getUsers } from '@/actions/admin/users'
-import { Button } from '@/components/ui/button'
+// Button removed
 import { Metadata } from 'next'
 import { UsersClient } from './users-client'
 
@@ -31,7 +31,6 @@ export default async function UsersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
           <p className="text-muted-foreground">View participants, nicknames, and submission statuses.</p>
         </div>
-        <Button variant="outline">Export CSV</Button>
       </div>
 
       <UsersClient formattedData={formattedData} />

@@ -45,12 +45,15 @@ export async function uploadSubmission(formData: FormData) {
   // Check global submission deadline + active scoring mode
   const { data: settings } = await supabase
     .from('competition_settings')
-    .select('submission_deadline, tier1_only_mode')
+    .select('submission_deadline, submissions_open, tier1_only_mode')
     .single()
 
-  if (settings?.submission_deadline) {
-    if (new Date() > new Date(settings.submission_deadline)) {
-      return { error: 'Submissions are closed. The prediction window ended when the Round of 32 began.' }
+  if (settings) {
+    if (settings.submissions_open === false) {
+      return { error: 'Submissions are currently closed by administrators.' }
+    }
+    if (settings.submission_deadline && new Date() > new Date(settings.submission_deadline)) {
+      return { error: 'Submissions are closed. The prediction window ended when the Round of 16 began.' }
     }
   }
 

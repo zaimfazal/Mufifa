@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { updateCompetitionSettings } from '@/actions/admin/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 interface SettingsFormProps {
   initialDeadline: string
-  initialRegistrationsOpen: boolean
+  initialSubmissionsOpen: boolean
   initialTier1Only: boolean
 }
 
@@ -18,10 +18,21 @@ interface SettingsFormProps {
  * appears to change after mount, so every field here is controlled via state.
  * Controlled inputs still submit through the server action via their `name`.
  */
-export function SettingsForm({ initialDeadline, initialRegistrationsOpen, initialTier1Only }: SettingsFormProps) {
-  const [deadline, setDeadline] = useState(initialDeadline)
-  const [registrationsOpen, setRegistrationsOpen] = useState(initialRegistrationsOpen)
+export function SettingsForm({ initialDeadline, initialSubmissionsOpen, initialTier1Only }: SettingsFormProps) {
+  const [deadline, setDeadline] = useState('')
+  const [submissionsOpen, setSubmissionsOpen] = useState(initialSubmissionsOpen)
   const [tier1Only, setTier1Only] = useState(initialTier1Only)
+
+  // Parse absolute ISO string to local datetime-local string
+  useEffect(() => {
+    if (initialDeadline) {
+      const d = new Date(initialDeadline)
+      if (!isNaN(d.getTime())) {
+        const pad = (n: number) => n.toString().padStart(2, '0')
+        setDeadline(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`)
+      }
+    }
+  }, [initialDeadline])
 
   return (
     <form action={updateCompetitionSettings} className="space-y-8 max-w-2xl">
@@ -43,6 +54,7 @@ export function SettingsForm({ initialDeadline, initialRegistrationsOpen, initia
               onChange={(e) => setDeadline(e.target.value)}
               className="bg-background"
             />
+            <input type="hidden" name="submission_deadline_iso" value={deadline ? new Date(deadline).toISOString() : ''} />
             <p className="text-xs text-muted-foreground">
               Leave blank to keep submissions open indefinitely.
             </p>
@@ -50,13 +62,13 @@ export function SettingsForm({ initialDeadline, initialRegistrationsOpen, initia
 
           <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
             <div className="space-y-0.5">
-              <label className="text-sm font-medium">Registrations Open</label>
-              <p className="text-xs text-muted-foreground">Toggle whether new users can register.</p>
+              <label className="text-sm font-medium">Submissions Open</label>
+              <p className="text-xs text-muted-foreground">Toggle whether users can submit predictions.</p>
             </div>
             <Switch
-              name="registrations_open"
-              checked={registrationsOpen}
-              onCheckedChange={setRegistrationsOpen}
+              name="submissions_open"
+              checked={submissionsOpen}
+              onCheckedChange={setSubmissionsOpen}
             />
           </div>
 
