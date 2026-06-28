@@ -113,10 +113,18 @@ export function UsersClient({ formattedData }: { formattedData: any[] }) {
               >
                 {user.is_active ? 'Disable' : 'Enable'}
               </Button>
-            </form>
-            <form action={deleteAction}>
-               <Button variant="destructive" size="sm" disabled={user.role === 'admin'}>Delete</Button>
-            </form>
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              disabled={user.role === 'admin'}
+              onClick={async () => {
+                if (confirm('Are you sure you want to delete this user?')) {
+                  await deleteAction()
+                }
+              }}
+            >
+              Delete
+            </Button>
           </div>
         )
       }
