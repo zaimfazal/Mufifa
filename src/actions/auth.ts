@@ -4,19 +4,20 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 
 export async function signIn(formData: FormData) {
   const username = formData.get("email") as string;
   const password = formData.get("password") as string;
 
   if (!username || !password) {
-    return { error: "Email/muLearn ID and password are required." };
+    return { error: "Email and password are required." };
   }
 
-  const host = (await headers()).get("host") || "localhost:3000";
-  const protocol = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
-  const apiUrl = `${protocol}://${host}/api/v1/ai-ig/auth`;
+  const apiUrl = process.env.LOGIN_EXTERNAL_API_URL;
+
+  if (!apiUrl) {
+    return { error: "External login API URL is not configured." };
+  }
 
   try {
     // 1. Authenticate with the external API
@@ -24,7 +25,7 @@ export async function signIn(formData: FormData) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.AI_IG_API_KEY || "fallback_default_secret_key_123456"}`
+        Authorization: `Bearer ${process.env.AI_IG_API_KEY || "fallback_default_secret_key_123456"}`,
       },
       body: JSON.stringify({
         email: username,
@@ -41,7 +42,10 @@ export async function signIn(formData: FormData) {
         } else if (errData.error) {
           if (typeof errData.error === "string") {
             errorMsg = errData.error;
-          } else if (typeof errData.error === "object" && errData.error !== null) {
+          } else if (
+            typeof errData.error === "object" &&
+            errData.error !== null
+          ) {
             errorMsg = errData.error.message || errData.error.code || errorMsg;
           }
         }
@@ -164,7 +168,10 @@ export async function signIn(formData: FormData) {
     revalidatePath("/", "layout");
     return { success: true };
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : "An unexpected error occurred during login.";
+    const errorMsg =
+      err instanceof Error
+        ? err.message
+        : "An unexpected error occurred during login.";
     console.error("Authentication process failed:", err);
     return {
       error: errorMsg,
