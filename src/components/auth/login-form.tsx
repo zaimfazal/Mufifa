@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Invalid email address.' }),
+  email: z.string().min(1, { message: 'Email or muLearn ID is required.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
 })
 
@@ -63,7 +63,7 @@ export function LoginForm() {
           Login
         </CardTitle>
         <CardDescription className="text-center text-muted-foreground">
-          Enter your email and password to access your account
+          Enter your email or muLearn ID and password to access your account
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -74,9 +74,9 @@ export function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email or muLearn ID</FormLabel>
                   <FormControl>
-                    <Input placeholder="name@example.com" {...field} className="bg-background/50" />
+                    <Input placeholder="name@example.com or user@mulearn" {...field} className="bg-background/50" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -124,14 +124,7 @@ export function LoginForm() {
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <div className="text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-accent hover:underline font-medium">
-            Register
-          </Link>
-        </div>
-      </CardFooter>
+
     </Card>
   )
 }

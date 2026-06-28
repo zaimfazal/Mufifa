@@ -61,16 +61,9 @@ export async function Navbar() {
               </Button>
             </form>
           ) : (
-            <>
-              <Link href="/login">
-                <Button variant="ghost" size="sm">Login</Button>
-              </Link>
-              <Link href="/register">
-                <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 neon-border-green">
-                  Register
-                </Button>
-              </Link>
-            </>
+            <Link href="/login">
+              <Button variant="ghost" size="sm">Login</Button>
+            </Link>
           )}
         </div>
 
@@ -121,11 +114,6 @@ export async function Navbar() {
                 <div className="flex flex-col gap-2 mt-auto">
                   <Link href="/login" className="w-full">
                     <Button variant="outline" className="w-full">Login</Button>
-                  </Link>
-                  <Link href="/register" className="w-full">
-                    <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 neon-border-green">
-                      Register
-                    </Button>
                   </Link>
                 </div>
               )}

@@ -96,9 +96,9 @@ export default async function Home(props: { searchParams?: SearchParams }) {
                 )
               ) : (
                 <>
-                  <Link href="/register">
+                  <Link href="/login">
                     <Button size="lg" className="w-full sm:w-auto px-8 text-base h-12 shadow-lg hover:shadow-primary/25 transition-all">
-                      Register Now
+                      Login Now
                     </Button>
                   </Link>
                   <Link href="/leaderboard">
@@ -484,9 +484,9 @@ export default async function Home(props: { searchParams?: SearchParams }) {
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
             {!user && (
-              <Link href="/register">
+              <Link href="/login">
                 <Button size="lg" variant="secondary" className="w-full sm:w-auto px-8 h-14 text-base font-bold shadow-lg">
-                  Register Now
+                  Login Now
                 </Button>
               </Link>
             )}
