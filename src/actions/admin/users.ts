@@ -65,6 +65,7 @@ export async function deleteUser(userId: string) {
 
   await logAuditEvent('delete_user', 'profiles', userId, {})
   revalidatePath('/admin/users')
+  revalidatePath('/leaderboard')
   return { success: true }
 }
 

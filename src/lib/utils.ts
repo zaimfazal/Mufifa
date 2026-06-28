@@ -11,7 +11,7 @@ export function formatScore(value: number): string {
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  }).format(value)
+  }).format(Number(value) || 0)
 }
 
 export function formatPercentage(value: number): string {
@@ -19,7 +19,7 @@ export function formatPercentage(value: number): string {
     style: "percent",
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  }).format(value / 100)
+  }).format((Number(value) || 0) / 100)
 }
 
 export function formatDate(dateStr: string): string {

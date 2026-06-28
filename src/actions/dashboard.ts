@@ -38,7 +38,7 @@ export async function getDashboardPredictions(teamId: string) {
 
   return predictions.map((p: any) => {
     const match = p.matches
-    const actual = match.actual_results?.[0]
+    const actual = Array.isArray(match.actual_results) ? match.actual_results[0] : match.actual_results
     
     return {
       id: p.id,
