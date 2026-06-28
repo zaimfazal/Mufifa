@@ -98,14 +98,5 @@ export const columns: ColumnDef<LeaderboardRow>[] = [
     header: "Scorers",
     cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("scorer_score"))}</div>,
   },
-  {
-    accessorKey: "stats_score",
-    header: "Stats",
-    cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("stats_score"))}</div>,
-  },
-  {
-    accessorKey: "champion_score",
-    header: "Champion",
-    cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("champion_score"))}</div>,
-  },
+
 ]

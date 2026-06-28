@@ -90,16 +90,7 @@ export function LeaderboardTable({ data }: LeaderboardTableProps) {
       header: "Scorers",
       cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("scorer_score") as number)}</div>,
     },
-    {
-      accessorKey: "stats_score",
-      header: "Stats",
-      cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("stats_score") as number)}</div>,
-    },
-    {
-      accessorKey: "champion_score",
-      header: "Champion",
-      cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("champion_score") as number)}</div>,
-    },
+
   ]
 
   // eslint-disable-next-line react-hooks/incompatible-library

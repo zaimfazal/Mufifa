@@ -87,6 +87,12 @@
   html {
     @apply font-sans;
   }
+  
+  /* Hide native Edge/IE password reveal button */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
 }
 
 /* Glassmorphism/UI Panel utility */
