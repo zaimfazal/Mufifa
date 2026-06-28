@@ -211,7 +211,8 @@ export function SubmissionClient({ initialData, limited = false }: { initialData
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
-                </AlertDialog>
+                  </AlertDialog>
+                </div>
               </div>
             )}
           </CardContent>
