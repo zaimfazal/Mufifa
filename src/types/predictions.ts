@@ -51,6 +51,8 @@ export interface JerseyScorers {
 
 export interface ParsedPrediction {
   match_id: string;
+  predicted_home_team: string;
+  predicted_away_team: string;
   winner: string | null;
   home_score: number | null;
   away_score: number | null;

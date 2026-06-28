@@ -234,6 +234,8 @@ export function validateCsv(
     if (result.valid) {
       result.predictions.push({
         match_id: row.match_id,
+        predicted_home_team: row.home_team,
+        predicted_away_team: row.away_team,
         winner: row.predicted_winner,
         home_score: parseInt(row.predicted_home_score, 10),
         away_score: parseInt(row.predicted_away_score, 10),
@@ -366,6 +368,8 @@ export function validateLimitedCsv(
     if (result.valid) {
       result.predictions.push({
         match_id: row.match_id,
+        predicted_home_team: row.home_team,
+        predicted_away_team: row.away_team,
         winner: row.predicted_winner,
         home_score: parseInt(row.predicted_home_score, 10),
         away_score: parseInt(row.predicted_away_score, 10),

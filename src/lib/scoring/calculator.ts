@@ -2,6 +2,67 @@
 import { createAdminClient } from '../supabase/admin'
 import { loadScoringRules } from './rules-loader'
 import { calculateMatchScore, calculateChampionScore } from './engine'
+function getDynamicPrediction(teamPreds: any[], actual: any) {
+  const actualStage = (actual.matches as any).stage
+  const actualHome = (actual.matches as any).home_team
+  const actualAway = (actual.matches as any).away_team
+
+  let match = teamPreds.find(p => {
+    if ((p.matches as any).stage !== actualStage) return false
+    
+    const pHome = (p.predicted_home_team || '').trim().toLowerCase()
+    const pAway = (p.predicted_away_team || '').trim().toLowerCase()
+    const aHome = (actualHome || '').trim().toLowerCase()
+    const aAway = (actualAway || '').trim().toLowerCase()
+    
+    if (!pHome || !pAway || pHome === 'tbd' || pAway === 'tbd') return false
+
+    return (pHome === aHome && pAway === aAway) || (pHome === aAway && pAway === aHome)
+  })
+
+  if (!match) {
+    match = teamPreds.find(p => p.match_id === actual.match_id)
+    if (!match) return null
+  }
+
+  const pHome = (match.predicted_home_team || '').trim().toLowerCase()
+  const aHome = (actualHome || '').trim().toLowerCase()
+
+  if (pHome && pHome !== 'tbd' && pHome !== aHome) {
+    const flippedPred = { ...match }
+    flippedPred.predicted_home_team = match.predicted_away_team
+    flippedPred.predicted_away_team = match.predicted_home_team
+    flippedPred.home_score = match.away_score
+    flippedPred.away_score = match.home_score
+    flippedPred.extra_time_home = match.extra_time_away
+    flippedPred.extra_time_away = match.extra_time_home
+    flippedPred.penalty_home = match.penalty_away
+    flippedPred.penalty_away = match.penalty_home
+    flippedPred.possession_home = match.possession_away
+    flippedPred.possession_away = match.possession_home
+    flippedPred.shots_home = match.shots_away
+    flippedPred.shots_away = match.shots_home
+    flippedPred.xg_home = match.xg_away
+    flippedPred.xg_away = match.xg_home
+    flippedPred.yellow_home = match.yellow_away
+    flippedPred.yellow_away = match.yellow_home
+    flippedPred.red_home = match.red_away
+    flippedPred.red_away = match.red_home
+
+    if (match.winner === 'home') flippedPred.winner = 'away'
+    else if (match.winner === 'away') flippedPred.winner = 'home'
+
+    if (match.goal_scorers && !Array.isArray(match.goal_scorers)) {
+      flippedPred.goal_scorers = {
+        home: match.goal_scorers.away || [],
+        away: match.goal_scorers.home || []
+      }
+    }
+    return flippedPred
+  }
+
+  return match
+}
 
 export async function recalculateAll() {
   const supabase = createAdminClient()
@@ -16,8 +77,8 @@ export async function recalculateAll() {
     { data: submissions },
   ] = await Promise.all([
     supabase.from('teams').select('id'),
-    supabase.from('predictions').select('*'),
-    supabase.from('actual_results').select('*, matches(multiplier, home_team, away_team)'),
+    supabase.from('predictions').select('*, matches(stage)'),
+    supabase.from('actual_results').select('*, matches(multiplier, home_team, away_team, stage)'),
     supabase.from('champion_predictions').select('*'),
     supabase.from('analytics_cache').select('metric_value').eq('metric_key', 'tournament_champion').maybeSingle(),
     supabase.from('submissions').select('team_id, locked_at'),
@@ -64,7 +125,7 @@ export async function recalculateAll() {
 
     if (actuals && teamPreds.length > 0) {
       for (const actual of actuals) {
-        const pred = teamPreds.find(p => p.match_id === actual.match_id)
+        const pred = getDynamicPrediction(teamPreds, actual)
         if (pred) {
           const multiplier = (actual.matches as any).multiplier as number
           const result = calculateMatchScore(pred, actual, rules, multiplier)
@@ -145,8 +206,8 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
     { data: champPred },
     { data: champActual },
   ] = await Promise.all([
-    supabase.from('predictions').select('*').eq('team_id', teamId),
-    supabase.from('actual_results').select('*, matches(multiplier, home_team, away_team)'),
+    supabase.from('predictions').select('*, matches(stage)').eq('team_id', teamId),
+    supabase.from('actual_results').select('*, matches(multiplier, home_team, away_team, stage)'),
     supabase.from('champion_predictions').select('champion').eq('team_id', teamId).maybeSingle(),
     supabase.from('analytics_cache').select('metric_value').eq('metric_key', 'tournament_champion').maybeSingle(),
   ])
@@ -162,7 +223,7 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
 
   if (predictions && actuals) {
     for (const actual of actuals) {
-      const pred = predictions.find(p => p.match_id === actual.match_id)
+      const pred = getDynamicPrediction(predictions, actual)
       if (pred) {
         const multiplier = (actual.matches as any).multiplier as number
         const result = calculateMatchScore(pred, actual, rules, multiplier)

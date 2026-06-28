@@ -114,6 +114,8 @@ export async function uploadSubmission(formData: FormData) {
 
   const predictions = validationResult.predictions.map(p => ({
     match_id: matchMap.get(p.match_id)!,
+    predicted_home_team: p.predicted_home_team,
+    predicted_away_team: p.predicted_away_team,
     winner: p.winner,
     home_score: p.home_score,
     away_score: p.away_score,
@@ -156,6 +158,8 @@ export async function uploadSubmission(formData: FormData) {
     predictions.map(p => ({
       team_id: team.id,
       match_id: p.match_id,
+      predicted_home_team: p.predicted_home_team,
+      predicted_away_team: p.predicted_away_team,
       winner: p.winner,
       home_score: p.home_score,
       away_score: p.away_score,
