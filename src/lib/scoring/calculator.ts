@@ -2,7 +2,7 @@
 import { createAdminClient } from '../supabase/admin'
 import { loadScoringRules } from './rules-loader'
 import { calculateMatchScore, calculateChampionScore } from './engine'
-function getDynamicPrediction(teamPreds: any[], actual: any) {
+export function getDynamicPrediction(teamPreds: any[], actual: any) {
   const actualStage = (actual.matches as any).stage
   const actualHome = (actual.matches as any).home_team
   const actualAway = (actual.matches as any).away_team
