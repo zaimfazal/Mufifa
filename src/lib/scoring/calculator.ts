@@ -59,9 +59,7 @@ export async function recalculateAll() {
       winner_score: 0,
       scoreline_score: 0,
       scorer_score: 0,
-      stats_score: 0,
-      champion_score: 0,
-      confidence_score: 0
+      champion_score: 0
     }
 
     if (actuals && teamPreds.length > 0) {
@@ -77,8 +75,6 @@ export async function recalculateAll() {
           breakdown.winner_score += result.breakdown.outcome
           breakdown.scoreline_score += result.breakdown.scoreline
           breakdown.scorer_score += result.breakdown.scorer
-          breakdown.stats_score += result.breakdown.stats
-          breakdown.confidence_score += result.breakdown.confidence
         }
       }
     }
@@ -91,6 +87,7 @@ export async function recalculateAll() {
     }
 
     const accuracy = maxPossible > 0 ? (totalScore / maxPossible) * 100 : 0
+    console.log(`Team: ${team.id}, Score: ${totalScore}, Max: ${maxPossible}`)
 
     leaderboardEntries.push({
       team_id: team.id,
@@ -125,7 +122,10 @@ export async function recalculateAll() {
     const CHUNK_SIZE = 500
     for (let i = 0; i < upsertPayload.length; i += CHUNK_SIZE) {
       const chunk = upsertPayload.slice(i, i + CHUNK_SIZE)
-      await supabase.from('leaderboard').upsert(chunk, { onConflict: 'team_id' })
+      const { error } = await supabase.from('leaderboard').upsert(chunk, { onConflict: 'team_id' })
+      if (error) {
+        console.error('UPSERT ERROR in recalculateAll:', error)
+      }
     }
   }
 }
@@ -157,9 +157,7 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
     winner_score: 0,
     scoreline_score: 0,
     scorer_score: 0,
-    stats_score: 0,
-    champion_score: 0,
-    confidence_score: 0
+    champion_score: 0
   }
 
   if (predictions && actuals) {
@@ -175,8 +173,6 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
         breakdown.winner_score += result.breakdown.outcome
         breakdown.scoreline_score += result.breakdown.scoreline
         breakdown.scorer_score += result.breakdown.scorer
-        breakdown.stats_score += result.breakdown.stats
-        breakdown.confidence_score += result.breakdown.confidence
       }
     }
   }
