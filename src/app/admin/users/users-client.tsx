@@ -16,13 +16,14 @@ export function UsersClient({ formattedData }: { formattedData: any[] }) {
   const [filter, setFilter] = useState('all')
 
   const handleExportCsv = () => {
-    const headers = ['Email', 'Nickname', 'Role', 'Status', 'Registered']
+    const headers = ['Email', 'Nickname', 'Role', 'Status', 'Registered', 'GitHub Link']
     const rows = formattedData.map(u => [
       u.email,
       u.team_name,
       u.role,
       u.submission_locked ? 'Locked' : u.has_submission ? 'Uploaded' : 'Pending',
-      formatDate(u.created_at)
+      formatDate(u.created_at),
+      u.github_link || ''
     ])
     
     const csvContent = [
@@ -89,6 +90,19 @@ export function UsersClient({ formattedData }: { formattedData: any[] }) {
       accessorKey: 'created_at',
       header: 'Registered',
       cell: ({ row }) => <div className="text-muted-foreground text-sm">{formatDate(row.getValue('created_at'))}</div>
+    },
+    {
+      accessorKey: 'github_link',
+      header: 'GitHub Link',
+      cell: ({ row }) => {
+        const link = row.getValue('github_link') as string | null
+        if (!link) return <span className="text-muted-foreground text-sm">-</span>
+        return (
+          <a href={link} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline text-sm truncate max-w-[150px] inline-block" title={link}>
+            {link.replace(/^https?:\/\//, '')}
+          </a>
+        )
+      }
     },
     {
       id: 'actions',

@@ -26,7 +26,8 @@ export default async function UsersPage() {
       created_at: u.created_at,
       team_name: team?.team_name || 'No Team',
       submission_locked: team?.submission_locked || false,
-      has_submission: !!submission
+      has_submission: !!submission,
+      github_link: team?.github_link || null
     }
   })
 

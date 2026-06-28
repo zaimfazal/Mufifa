@@ -11,7 +11,10 @@ import { logger } from '@/lib/logger'
 
 export async function uploadSubmission(formData: FormData) {
   const file = formData.get('file') as File
+  const githubLink = formData.get('github_link') as string
+  
   if (!file) return { error: 'No file provided' }
+  if (!githubLink || githubLink.trim() === '') return { error: 'GitHub repository link is required.' }
   
   if (file.type !== 'text/csv' && file.type !== 'application/vnd.ms-excel') {
     return { error: 'Invalid file type. Only CSV files are allowed.' }
@@ -185,6 +188,8 @@ export async function uploadSubmission(formData: FormData) {
   // 5. Ensure leaderboard entry exists
   await supabase.from('leaderboard').insert({ team_id: team.id }).select().maybeSingle()
 
+  // 6. Update github_link in teams table
+  await supabase.from('teams').update({ github_link: githubLink.trim() }).eq('id', team.id)
 
   // Log audit
   await supabase.from('audit_logs').insert({
@@ -207,7 +212,7 @@ export async function getMySubmission() {
 
   const { data: team } = await supabase
     .from('teams')
-    .select('id, team_name, submission_locked')
+    .select('id, team_name, submission_locked, github_link')
     .eq('owner_id', user.id)
     .single()
 

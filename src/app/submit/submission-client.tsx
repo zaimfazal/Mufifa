@@ -28,6 +28,7 @@ import {
 
 export function SubmissionClient({ initialData, limited = false }: { initialData: any, limited?: boolean }) {
   const [file, setFile] = useState<File | null>(null)
+  const [githubLink, setGithubLink] = useState(initialData?.team?.github_link || '')
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
   const [isPending, startTransition] = useTransition()
   const [isDownloading, setIsDownloading] = useState(false)
@@ -43,6 +44,7 @@ export function SubmissionClient({ initialData, limited = false }: { initialData
     startTransition(async () => {
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('github_link', githubLink)
       
       const result = await uploadSubmission(formData)
       
@@ -166,18 +168,31 @@ export function SubmissionClient({ initialData, limited = false }: { initialData
             )}
 
             {file && (!validationResult || validationResult.valid) && (
-              <div className="flex justify-end pt-4">
-                <AlertDialog>
-                  <AlertDialogTrigger
-                    render={
-                      <Button
-                        className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
-                        disabled={isPending}
-                      />
-                    }
-                  >
-                    {isPending ? 'Processing...' : 'Validate & Submit'}
-                  </AlertDialogTrigger>
+              <div className="space-y-4 pt-4 border-t border-border/50">
+                <div className="space-y-2">
+                  <Label htmlFor="github_link">GitHub Repository Link <span className="text-destructive">*</span></Label>
+                  <Input 
+                    id="github_link" 
+                    placeholder="https://github.com/username/repo" 
+                    value={githubLink}
+                    onChange={(e) => setGithubLink(e.target.value)}
+                    required
+                    className="bg-background/50"
+                  />
+                  <p className="text-sm text-muted-foreground">Link to the ML notebook used to generate these predictions.</p>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger
+                      render={
+                        <Button
+                          className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+                          disabled={isPending || !githubLink.trim()}
+                        />
+                      }
+                    >
+                      {isPending ? 'Processing...' : 'Validate & Submit'}
+                    </AlertDialogTrigger>
                   <AlertDialogContent className="glass-panel border-accent/20">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Submit your predictions?</AlertDialogTitle>

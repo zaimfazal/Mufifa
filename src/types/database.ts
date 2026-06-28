@@ -47,6 +47,7 @@ export interface Database {
           owner_id: string;
           team_name: string;
           submission_locked: boolean;
+          github_link: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -55,10 +56,12 @@ export interface Database {
           owner_id: string;
           team_name: string;
           submission_locked?: boolean;
+          github_link?: string | null;
         };
         Update: {
           team_name?: string;
           submission_locked?: boolean;
+          github_link?: string | null;
         };
       };
       matches: {

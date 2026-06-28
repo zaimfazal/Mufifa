@@ -13,7 +13,7 @@ export async function getUsers(page: number = 1, pageSize: number = 50, search: 
     .from('profiles')
     .select(`
       *,
-      teams(id, team_name, submission_locked, submissions(id, is_valid))
+      teams(id, team_name, submission_locked, github_link, submissions(id, is_valid))
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
 
