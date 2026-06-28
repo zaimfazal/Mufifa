@@ -1,11 +1,13 @@
 import { z } from 'zod'
 import { CsvRow, LimitedCsvRow, ValidationError, ValidationResult } from '@/types/predictions'
+import { TOURNAMENT_STAGES } from '../constants'
 import { parseGoalScorers, parseJerseyNumbers } from './parser'
 
 type MatchReference = {
   match_code: string
   home_team: string
   away_team: string
+  stage?: string
 }
 
 const predictionRowSchema = z.object({
@@ -296,10 +298,16 @@ export function validateLimitedCsv(
   const seenMatches = new Set<string>()
   const validMatchIds = getValidMatchIds(validMatches)
   const validTeams = new Set<string>()
+  const stageToCodes = new Map<string, string[]>()
   if (validMatches.length > 0 && typeof validMatches[0] !== 'string') {
     ;(validMatches as MatchReference[]).forEach(match => {
       validTeams.add(normalizedText(match.home_team))
       validTeams.add(normalizedText(match.away_team))
+      if (match.stage) {
+        const stageLabel = TOURNAMENT_STAGES.find(s => s.value === match.stage)?.label || match.stage
+        if (!stageToCodes.has(stageLabel)) stageToCodes.set(stageLabel, [])
+        stageToCodes.get(stageLabel)!.push(match.match_code)
+      }
     })
   }
 
@@ -316,6 +324,19 @@ export function validateLimitedCsv(
       pushErr('match_id', 'Match ID is required')
       return
     }
+
+    let mappedMatchId = row.match_id
+    if (stageToCodes.has(row.match_id)) {
+      const codes = stageToCodes.get(row.match_id)!
+      if (codes.length > 0) {
+        mappedMatchId = codes.shift()!
+      } else {
+        pushErr('match_id', `Too many predictions for stage: ${row.match_id}`)
+        return
+      }
+    }
+    row.match_id = mappedMatchId
+
     if (validMatchIds.length > 0 && !validMatchIds.includes(row.match_id)) {
       pushErr('match_id', `Invalid match ID: ${row.match_id}`)
     }

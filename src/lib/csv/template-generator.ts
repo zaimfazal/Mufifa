@@ -1,5 +1,5 @@
 import Papa from 'papaparse'
-import { CSV_COLUMNS, CSV_LIMITED_COLUMNS } from '../constants'
+import { CSV_COLUMNS, CSV_LIMITED_COLUMNS, TOURNAMENT_STAGES } from '../constants'
 import { Database } from '@/types/database'
 
 type MatchRow = Database['public']['Tables']['matches']['Row']
@@ -15,10 +15,12 @@ export function generateTemplate(matches: MatchRow[], limited = false): string {
       row[col] = ''
     })
 
+    const stageLabel = TOURNAMENT_STAGES.find(s => s.value === match.stage)?.label || match.stage
+
     // Pre-fill known data
-    row.match_id = match.match_code
-    row.home_team = match.home_team
-    row.away_team = match.away_team
+    row.match_id = stageLabel
+    row.home_team = ''
+    row.away_team = ''
 
     return row
   })

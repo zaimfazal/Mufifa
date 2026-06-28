@@ -62,7 +62,7 @@ export async function uploadSubmission(formData: FormData) {
   // Fetch valid matches
   const { data: matches } = await supabase
     .from('matches')
-    .select('match_code, home_team, away_team')
+    .select('match_code, home_team, away_team, stage')
 
   // The active competition uses the limited template (exact score + scorer
   // jersey numbers) for everyone. We always parse/validate in that format so it
