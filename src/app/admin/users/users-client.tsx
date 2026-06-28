@@ -143,7 +143,7 @@ export function UsersClient({ formattedData }: { formattedData: any[] }) {
       <div className="flex justify-between items-center bg-muted/20 p-4 rounded-xl border border-border/50">
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium">Filter Status:</span>
-          <Select value={filter} onValueChange={setFilter}>
+          <Select value={filter} onValueChange={(val) => setFilter(val || 'all')}>
             <SelectTrigger className="w-[180px] bg-background">
               <SelectValue placeholder="All Users" />
             </SelectTrigger>
