@@ -157,7 +157,23 @@ export function SubmissionClient({ initialData, limited = false }: { initialData
           </CardHeader>
           <CardContent className="space-y-6 pt-4">
             
-            <CsvUpload onFileSelect={handleFileSelect} isUploading={isPending} />
+            <div className="space-y-2">
+              <Label htmlFor="github_link">GitHub Repository Link <span className="text-destructive">*</span></Label>
+              <Input 
+                id="github_link" 
+                placeholder="https://github.com/username/repo" 
+                value={githubLink}
+                onChange={(e) => setGithubLink(e.target.value)}
+                required
+                className="bg-background/50"
+              />
+              <p className="text-sm text-muted-foreground">Link to the ML notebook used to generate these predictions.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Predictions CSV <span className="text-destructive">*</span></Label>
+              <CsvUpload onFileSelect={handleFileSelect} isUploading={isPending} />
+            </div>
             
             {validationResult && (
               <ValidationResults 
@@ -169,18 +185,6 @@ export function SubmissionClient({ initialData, limited = false }: { initialData
 
             {file && (!validationResult || validationResult.valid) && (
               <div className="space-y-4 pt-4 border-t border-border/50">
-                <div className="space-y-2">
-                  <Label htmlFor="github_link">GitHub Repository Link <span className="text-destructive">*</span></Label>
-                  <Input 
-                    id="github_link" 
-                    placeholder="https://github.com/username/repo" 
-                    value={githubLink}
-                    onChange={(e) => setGithubLink(e.target.value)}
-                    required
-                    className="bg-background/50"
-                  />
-                  <p className="text-sm text-muted-foreground">Link to the ML notebook used to generate these predictions.</p>
-                </div>
                 <div className="flex justify-end pt-2">
                   <AlertDialog>
                     <AlertDialogTrigger
