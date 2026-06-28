@@ -13,16 +13,22 @@ export default async function UsersPage() {
   const { rows } = await getUsers(1, 100)
 
   // Map to flat structure for table
-  const formattedData = rows.map((u: any) => ({
-    id: u.id,
-    email: u.email,
-    role: u.role,
-    is_active: u.is_active,
-    created_at: u.created_at,
-    team_name: u.teams?.[0]?.team_name || 'No Team',
-    submission_locked: u.teams?.[0]?.submission_locked || false,
-    has_submission: !!u.teams?.[0]?.submissions?.[0]
-  }))
+  const formattedData = rows.map((u: any) => {
+    const team = Array.isArray(u.teams) ? u.teams[0] : u.teams
+    const submissions = team?.submissions
+    const submission = Array.isArray(submissions) ? submissions[0] : submissions
+    
+    return {
+      id: u.id,
+      email: u.email,
+      role: u.role,
+      is_active: u.is_active,
+      created_at: u.created_at,
+      team_name: team?.team_name || 'No Team',
+      submission_locked: team?.submission_locked || false,
+      has_submission: !!submission
+    }
+  })
 
   return (
     <div className="p-8 space-y-6">
