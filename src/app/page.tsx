@@ -119,7 +119,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
           <div className="text-center mb-16 space-y-4">
             <h2 className="text-4xl font-bold tracking-tight">About The Competition</h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Organized as part of the <span className="font-semibold text-foreground">MuLearn Hackathon ecosystem</span>. Unlike traditional fantasy leagues, this competition evaluates the performance of machine learning models using a structured scoring framework designed to reward both accuracy and statistical insight.
+              Organized as part of the <span className="font-semibold text-foreground">μLearn Foundation</span>. Unlike traditional fantasy leagues, this competition evaluates the performance of machine learning models using a structured scoring framework designed to reward both accuracy and statistical insight.
             </p>
             <div className="bg-background border border-border rounded-xl p-6 mt-8 max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-left shadow-sm">
               <div className="flex items-start gap-4">
@@ -127,16 +127,16 @@ export default async function Home(props: { searchParams?: SearchParams }) {
                   <BrainCircuit className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-lg mb-1 text-foreground">Earn MuLearn Karma Points</h4>
+                  <h4 className="font-bold text-lg mb-1 text-foreground">Earn μLearn Karma Points</h4>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    This challenge is part of MuLearn. Participants who submit their ML notebook, methodology, and final predictions in the MuLearn Discord community will receive MuLearn Karma Points. If you are not part of the MuLearn community, please register through <a href="https://mulearn.org" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary transition-colors">mulearn.org</a>.
+                    This challenge is part of μLearn. Participants who submit their ML notebook, methodology, and final predictions in the μLearn Discord community will receive μLearn Karma Points. If you are not part of the μLearn community, please register through <a href="https://mulearn.org" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary transition-colors">mulearn.org</a>.
                   </p>
                 </div>
               </div>
               <div className="flex flex-col gap-3 shrink-0 w-full sm:w-auto">
                 <Button asChild className="w-full shadow-sm">
                   <Link href="https://mulearn.org/" target="_blank" rel="noopener noreferrer">
-                    Register on MuLearn
+                    Register on μLearn
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full shadow-sm bg-transparent border-primary/30 hover:bg-primary/10">
@@ -510,7 +510,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
             <Badge variant="secondary" className="px-4 py-1.5 text-base flex items-center gap-2 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20">
               <Phone className="w-4 h-4" /> +91 9496392272
             </Badge>
-            <p className="text-sm font-medium opacity-70 mt-4">Organized as part of the MuLearn Hackathon ecosystem.</p>
+            <p className="text-sm font-medium opacity-70 mt-4">Organized as part of the μLearn Foundation.</p>
 
             <div className="pt-12 flex flex-col items-center space-y-6">
               <p className="text-sm font-bold opacity-80 uppercase tracking-widest text-primary-foreground">In Partnership With</p>
