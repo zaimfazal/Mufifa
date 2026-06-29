@@ -52,25 +52,40 @@ function getValidMatchIds(validMatches: string[] | MatchReference[]) {
 }
 
 function validateTeamName(row: CsvRow | LimitedCsvRow, rowNumber: number, matchRef: MatchReference | null, validTeams: Set<string>): ValidationError[] {
-  const homeTeam = matchRef?.home_team || row.home_team
-  const awayTeam = matchRef?.away_team || row.away_team
+  // home_team and away_team are participant predictions for dynamic bracket
+  // stages. The match reference identifies the slot, not the predicted teams.
+  const homeTeam = row.home_team?.trim() || matchRef?.home_team || ''
+  const awayTeam = row.away_team?.trim() || matchRef?.away_team || ''
 
-  if (!homeTeam || !awayTeam || normalizedText(row.predicted_winner) === 'draw') {
-    return []
-  }
-
-  const winner = normalizedText(row.predicted_winner)
+  const errors: ValidationError[] = []
   const home = normalizedText(homeTeam)
   const away = normalizedText(awayTeam)
 
-  if (winner === home || winner === away || winner === 'home' || winner === 'away') return []
-  if ((home === 'tbd' || away === 'tbd') && (validTeams.size === 0 || validTeams.has(winner))) return []
+  if (home && away && home === away) {
+    errors.push({ row: rowNumber, column: 'home_team/away_team', message: 'Home team and away team must be different' })
+  }
+  if (validTeams.size > 0 && home && home !== 'tbd' && !validTeams.has(home)) {
+    errors.push({ row: rowNumber, column: 'home_team', message: `Unknown predicted home team: ${homeTeam}` })
+  }
+  if (validTeams.size > 0 && away && away !== 'tbd' && !validTeams.has(away)) {
+    errors.push({ row: rowNumber, column: 'away_team', message: `Unknown predicted away team: ${awayTeam}` })
+  }
 
-  return [{
+  if (!homeTeam || !awayTeam || normalizedText(row.predicted_winner) === 'draw') {
+    return errors
+  }
+
+  const winner = normalizedText(row.predicted_winner)
+
+  if (winner === home || winner === away || winner === 'home' || winner === 'away') return errors
+  if ((home === 'tbd' || away === 'tbd') && (validTeams.size === 0 || validTeams.has(winner))) return errors
+
+  errors.push({
     row: rowNumber,
     column: 'predicted_winner',
     message: `Predicted winner must be ${homeTeam}, ${awayTeam}, or draw`
-  }]
+  })
+  return errors
 }
 
 function validatePlayerNames(row: CsvRow, rowNumber: number): ValidationError[] {
@@ -298,15 +313,15 @@ export function validateLimitedCsv(
   const seenMatches = new Set<string>()
   const validMatchIds = getValidMatchIds(validMatches)
   const validTeams = new Set<string>()
-  const stageToCodes = new Map<string, string[]>()
+  const stageToMatches = new Map<string, MatchReference[]>()
   if (validMatches.length > 0 && typeof validMatches[0] !== 'string') {
     ;(validMatches as MatchReference[]).forEach(match => {
       validTeams.add(normalizedText(match.home_team))
       validTeams.add(normalizedText(match.away_team))
       if (match.stage) {
         const stageLabel = TOURNAMENT_STAGES.find(s => s.value === match.stage)?.label || match.stage
-        if (!stageToCodes.has(stageLabel)) stageToCodes.set(stageLabel, [])
-        stageToCodes.get(stageLabel)!.push(match.match_code)
+        if (!stageToMatches.has(stageLabel)) stageToMatches.set(stageLabel, [])
+        stageToMatches.get(stageLabel)!.push(match)
       }
     })
   }
@@ -326,10 +341,19 @@ export function validateLimitedCsv(
     }
 
     let mappedMatchId = row.match_id
-    if (stageToCodes.has(row.match_id)) {
-      const codes = stageToCodes.get(row.match_id)!
-      if (codes.length > 0) {
-        mappedMatchId = codes.shift()!
+    if (stageToMatches.has(row.match_id)) {
+      const stageMatches = stageToMatches.get(row.match_id)!
+      if (stageMatches.length === 1) {
+        // Backward compatibility is safe only when the stage identifies one
+        // slot (normally the final).
+        mappedMatchId = stageMatches[0].match_code
+        stageMatches.splice(0, 1)
+      } else if (stageMatches.length > 1) {
+        pushErr(
+          'match_id',
+          `This template uses the ambiguous stage label "${row.match_id}". Download the latest template, which contains a unique match code for every row.`
+        )
+        return
       } else {
         pushErr('match_id', `Too many predictions for stage: ${row.match_id}`)
         return
@@ -345,10 +369,17 @@ export function validateLimitedCsv(
     }
     seenMatches.add(row.match_id)
 
+    const matchRef = getMatchReference(validMatches, row.match_id)
+    if (matchRef?.stage) {
+      const expectedStage = TOURNAMENT_STAGES.find(s => s.value === matchRef.stage)?.label || matchRef.stage
+      if (row.stage?.trim() !== expectedStage) {
+        pushErr('stage', `Stage must be ${expectedStage} for match ${row.match_id}`)
+      }
+    }
+
     if (!row.predicted_winner?.trim()) {
       pushErr('predicted_winner', 'Predicted winner is required')
     } else {
-      const matchRef = getMatchReference(validMatches, row.match_id)
       const teamErrors = validateTeamName(row, rowNumber, matchRef, validTeams)
       if (teamErrors.length > 0) {
         result.valid = false

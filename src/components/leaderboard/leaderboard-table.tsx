@@ -73,7 +73,7 @@ export function LeaderboardTable({ data }: LeaderboardTableProps) {
     {
       accessorKey: "accuracy",
       header: "Accuracy %",
-      cell: ({ row }) => <div className="text-secondary">{formatPercentage(row.getValue("accuracy") as number)}</div>,
+      cell: ({ row }) => <div className="text-primary font-semibold">{formatPercentage(row.getValue("accuracy") as number)}</div>,
     },
     {
       accessorKey: "winner_score",

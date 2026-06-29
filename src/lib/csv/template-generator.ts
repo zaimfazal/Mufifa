@@ -15,10 +15,13 @@ export function generateTemplate(matches: MatchRow[], limited = false): string {
       row[col] = ''
     })
 
-    const stageLabel = TOURNAMENT_STAGES.find(s => s.value === match.stage)?.label || match.stage
-
-    // Pre-fill known data
-    row.match_id = stageLabel
+    // A stage label is not a match identity: several bracket slots share the
+    // same stage and the teams in those slots are participant predictions.
+    // Keep the stable unique slot code in every downloaded template.
+    row.match_id = match.match_code
+    if (limited) {
+      row.stage = TOURNAMENT_STAGES.find(s => s.value === match.stage)?.label || match.stage
+    }
     row.home_team = ''
     row.away_team = ''
 

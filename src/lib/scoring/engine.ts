@@ -30,6 +30,21 @@ function normalizeOutcome(value: string | null, actual: Actual): string | null {
   return normalized
 }
 
+/**
+ * Official results created by older admin flows can have a null winner even
+ * though both scores are present. The scoreline is the source of truth, so
+ * derive the canonical outcome instead of treating that match as unscorable.
+ */
+function getActualOutcome(actual: Actual): string | null {
+  const storedOutcome = normalizeOutcome(actual.winner, actual)
+  if (storedOutcome) return storedOutcome
+
+  if (actual.home_score === null || actual.away_score === null) return null
+  if (actual.home_score > actual.away_score) return 'home'
+  if (actual.away_score > actual.home_score) return 'away'
+  return 'draw'
+}
+
 type JerseyObj = { home?: unknown; away?: unknown }
 
 /** Convert an unknown array-like value to a de-duped Set<number>. */
@@ -158,7 +173,7 @@ export function calculateMatchScore(
 
   // ── Rule 3: predicted_winner_correct (gated on 1+2, always true) ─────────
   const predictedWinner = normalizeOutcome(prediction.winner, actual)
-  const actualWinner = normalizeOutcome(actual.winner, actual)
+  const actualWinner = getActualOutcome(actual)
   const winnerCorrect =
     predictedWinner !== null && actualWinner !== null && predictedWinner === actualWinner
   const winnerPts = winnerCorrect ? (rules['predicted_winner_correct']?.points || 0) : 0

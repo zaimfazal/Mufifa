@@ -29,7 +29,12 @@ export function ScoringRulesForm({ rules }: Props) {
     'Other': [],
   }
 
-  rules.forEach(rule => {
+  // champion_prediction is excluded — it is not part of the current submission
+  // flow (limited CSV template has no tournament_champion column) so it must
+  // not appear in the UI or be awarded any points.
+  const activeRules = rules.filter(r => r.rule_key !== 'champion_prediction')
+
+  activeRules.forEach(rule => {
     const k = rule.rule_key
     if (
       k === 'home_team_correct' ||

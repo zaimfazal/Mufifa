@@ -39,6 +39,7 @@ export const CSV_COLUMNS = [
 // scorer jersey numbers per team (semicolon-separated, e.g. "10;7").
 export const CSV_LIMITED_COLUMNS = [
   'match_id',
+  'stage',
   'home_team',
   'away_team',
   'predicted_home_score',

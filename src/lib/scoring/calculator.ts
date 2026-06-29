@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAdminClient } from '../supabase/admin'
 import { loadScoringRules } from './rules-loader'
-import { calculateMatchScore, calculateChampionScore } from './engine'
+import { calculateMatchScore } from './engine'
+
 export function getDynamicPrediction(teamPreds: any[], actual: any) {
   const actualStage = (actual.matches as any).stage
   const actualHome = (actual.matches as any).home_team
   const actualAway = (actual.matches as any).away_team
 
-  let match = teamPreds.find(p => {
-    if ((p.matches as any).stage !== actualStage) return false
+  const stagePreds = teamPreds.filter(p => (p.matches as any).stage === actualStage)
+  let match = stagePreds.find(p => {
     
     const pHome = (p.predicted_home_team || '').trim().toLowerCase()
     const pAway = (p.predicted_away_team || '').trim().toLowerCase()
@@ -21,8 +22,18 @@ export function getDynamicPrediction(teamPreds: any[], actual: any) {
   })
 
   if (!match) {
-    match = teamPreds.find(p => p.match_id === actual.match_id)
-    if (!match) return null
+    const directMatch = teamPreds.find(p => p.match_id === actual.match_id)
+    if (!directMatch) return null
+
+    const directHome = (directMatch.predicted_home_team || '').trim().toLowerCase()
+    const directAway = (directMatch.predicted_away_team || '').trim().toLowerCase()
+    const hasPredictedPair = directHome && directAway && directHome !== 'tbd' && directAway !== 'tbd'
+
+    // A populated pair that does not match BOTH actual teams is a different
+    // predicted matchup. Never score it merely because its bracket slot ID
+    // happens to equal the official result row.
+    if (hasPredictedPair) return null
+    match = directMatch
   }
 
   const pHome = (match.predicted_home_team || '').trim().toLowerCase()
@@ -72,15 +83,13 @@ export async function recalculateAll() {
     { data: teams },
     { data: predictions },
     { data: actuals },
-    { data: champPreds },
-    { data: champActual },
     { data: submissions },
   ] = await Promise.all([
     supabase.from('teams').select('id'),
     supabase.from('predictions').select('*, matches(stage)'),
-    supabase.from('actual_results').select('*, matches(multiplier, home_team, away_team, stage)'),
-    supabase.from('champion_predictions').select('*'),
-    supabase.from('analytics_cache').select('metric_value').eq('metric_key', 'tournament_champion').maybeSingle(),
+    // A complete scoreline is sufficient: older rows may not have `winner`
+    // populated, and the engine derives it from these scores.
+    supabase.from('actual_results').select('*, matches(multiplier, home_team, away_team, stage)').not('home_score', 'is', null).not('away_score', 'is', null),
     supabase.from('submissions').select('team_id, locked_at'),
   ])
 
@@ -94,13 +103,6 @@ export async function recalculateAll() {
     }
   }
 
-  const champMap = new Map<string, string>()
-  if (champPreds) {
-    for (const c of champPreds) {
-      champMap.set(c.team_id, c.champion)
-    }
-  }
-
   const lockedMap = new Map<string, string>()
   if (submissions) {
     for (const s of submissions) {
@@ -109,7 +111,6 @@ export async function recalculateAll() {
   }
 
   const leaderboardEntries: any[] = []
-  const actualChampVal = champActual?.metric_value as string | undefined
 
   for (const team of teams) {
     const teamPreds = predMap.get(team.id) || []
@@ -120,7 +121,6 @@ export async function recalculateAll() {
       winner_score: 0,
       scoreline_score: 0,
       scorer_score: 0,
-      champion_score: 0
     }
 
     if (actuals && teamPreds.length > 0) {
@@ -138,13 +138,6 @@ export async function recalculateAll() {
           breakdown.scorer_score += result.breakdown.scorer
         }
       }
-    }
-
-    const teamChamp = champMap.get(team.id)
-    if (teamChamp && actualChampVal) {
-      const cScore = calculateChampionScore(teamChamp, actualChampVal, rules)
-      totalScore += cScore
-      breakdown.champion_score += cScore
     }
 
     const accuracy = maxPossible > 0 ? (totalScore / maxPossible) * 100 : 0
@@ -203,13 +196,9 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
   const [
     { data: predictions },
     { data: actuals },
-    { data: champPred },
-    { data: champActual },
   ] = await Promise.all([
     supabase.from('predictions').select('*, matches(stage)').eq('team_id', teamId),
-    supabase.from('actual_results').select('*, matches(multiplier, home_team, away_team, stage)'),
-    supabase.from('champion_predictions').select('champion').eq('team_id', teamId).maybeSingle(),
-    supabase.from('analytics_cache').select('metric_value').eq('metric_key', 'tournament_champion').maybeSingle(),
+    supabase.from('actual_results').select('*, matches(multiplier, home_team, away_team, stage)').not('home_score', 'is', null).not('away_score', 'is', null),
   ])
 
   let totalScore = 0
@@ -218,7 +207,6 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
     winner_score: 0,
     scoreline_score: 0,
     scorer_score: 0,
-    champion_score: 0
   }
 
   if (predictions && actuals) {
@@ -236,12 +224,6 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
         breakdown.scorer_score += result.breakdown.scorer
       }
     }
-  }
-
-  if (champPred && champActual && champActual.metric_value) {
-    const cScore = calculateChampionScore(champPred.champion, champActual.metric_value as string, rules)
-    totalScore += cScore
-    breakdown.champion_score += cScore
   }
 
   const accuracy = maxPossible > 0 ? (totalScore / maxPossible) * 100 : 0

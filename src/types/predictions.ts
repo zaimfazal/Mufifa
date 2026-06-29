@@ -34,6 +34,7 @@ export interface GoalScorer {
 // Limited-mode CSV row: exact score + scorer jersey numbers per team.
 export interface LimitedCsvRow {
   match_id: string;
+  stage: string;
   home_team: string;
   away_team: string;
   predicted_home_score: string;
