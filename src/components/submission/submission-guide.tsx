@@ -3,7 +3,6 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -12,8 +11,7 @@ import { Button } from '@/components/ui/button'
 import { BookOpen } from 'lucide-react'
 
 /**
- * Inline submission guideline. Mode-aware: the limited competition scores only
- * the exact scoreline and the set of scorer jersey numbers per team.
+ * Inline submission guide for completing the knockout stage prediction template.
  */
 export function SubmissionGuide({ limited }: { limited: boolean }) {
   return (
@@ -29,11 +27,6 @@ export function SubmissionGuide({ limited }: { limited: boolean }) {
       <DialogContent className="glass-panel border-accent/20 max-w-2xl">
         <DialogHeader>
           <DialogTitle>How to fill your prediction template</DialogTitle>
-          <DialogDescription>
-            {limited
-              ? 'Each match is scored on two things only: the exact final score and which players scored.'
-              : 'Fill one row per match with your predicted outcome and statistics.'}
-          </DialogDescription>
         </DialogHeader>
 
         {limited ? <LimitedGuide /> : <FullGuide />}
@@ -46,73 +39,71 @@ function LimitedGuide() {
   return (
     <div className="space-y-4 text-sm">
       <section>
-        <h4 className="font-semibold text-foreground mb-1">One row per match</h4>
         <p className="text-muted-foreground">
-          The template comes pre-filled with <code>match_id</code>, <code>home_team</code> and{' '}
-          <code>away_team</code> for every knockout match. Do not change those — just fill the
-          prediction columns on each row.
+          Complete the prediction template by filling in the knockout stage from the{' '}
+          <strong>Round of 16</strong> through the <strong>Final</strong>.
         </p>
       </section>
 
       <section>
-        <h4 className="font-semibold text-foreground mb-1">1. Exact score</h4>
+        <h4 className="font-semibold text-foreground mb-1">home_team</h4>
         <p className="text-muted-foreground">
-          Put the home goals in <code>predicted_home_score</code> and away goals in{' '}
-          <code>predicted_away_score</code>. You only earn the score points if{' '}
-          <strong>both numbers are exactly right</strong> — there is no partial credit.
+          Enter the team you predict will play as the home team in that fixture.
         </p>
       </section>
 
       <section>
-        <h4 className="font-semibold text-foreground mb-1">2. Scorers (jersey numbers)</h4>
+        <h4 className="font-semibold text-foreground mb-1">away_team</h4>
         <p className="text-muted-foreground">
-          List the <strong>jersey numbers</strong> of the players you think will score, separated by
-          semicolons. Home scorers go in <code>predicted_scorers_home</code>, away scorers in{' '}
-          <code>predicted_scorers_away</code>. Use the number once per player even if you think they
-          score twice — we only care <em>who</em> scores, not how many.
+          Enter the team you predict will play as the away team in that fixture.
         </p>
       </section>
 
       <section>
-        <h4 className="font-semibold text-foreground mb-1">The count must match the score</h4>
+        <h4 className="font-semibold text-foreground mb-1">
+          predicted_home_score & predicted_away_score
+        </h4>
         <p className="text-muted-foreground">
-          The number of scorer entries on each side must equal that side&apos;s predicted score. A{' '}
-          <code>2 : 0</code> needs exactly 2 home numbers and 0 away numbers. A correctly predicted{' '}
-          <code>0 : 0</code> (no scorers on either side) still earns the scorer points.
+          Enter the predicted final goals scored by the home and away teams at the end of regular time and extra time (if played). Do not include goals scored in a penalty shootout.
+        </p>
+      </section>
+
+      <section>
+        <h4 className="font-semibold text-foreground mb-1">
+          predicted_scorers_home & predicted_scorers_away
+        </h4>
+        <p className="text-muted-foreground">
+          Enter the jersey number(s) of the home and away teams' goal scorer(s). If multiple players score,
+          separate the jersey numbers with a semicolon (<code>;</code>).
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          <strong>Example:</strong> <code>9;11;7</code>
+        </p>
+      </section>
+
+      <section>
+        <h4 className="font-semibold text-foreground mb-1">predicted_winner</h4>
+        <p className="text-muted-foreground">
+          Enter the team you predict will win the match. If the match is decided on penalties,
+          enter the team that advances.
         </p>
       </section>
 
       <section className="rounded-md border border-border/50 bg-muted/20 p-3">
-        <p className="font-semibold text-foreground mb-1">Example — Brazil 2 : 1 Spain</p>
-        <p className="text-muted-foreground font-mono text-xs">
-          predicted_home_score = 2<br />
-          predicted_away_score = 1<br />
-          predicted_scorers_home = 10;7<br />
-          predicted_scorers_away = 9
-        </p>
-        <p className="text-muted-foreground mt-2">
-          You get the score points only if it ends 2–1, and the scorer points only if exactly #10
-          and #7 score for Brazil and exactly #9 scores for Spain.
-        </p>
+        <h4 className="font-semibold text-foreground mb-2">Notes</h4>
+        <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+          <li>Leave the scorer columns empty if you predict 0 goals for that team.</li>
+          <li>
+            The number of predicted goal scorers must not exceed the predicted score for the
+            corresponding team.
+          </li>
+        </ul>
       </section>
-
-      <p className="text-xs text-muted-foreground">
-        Scores in later rounds are worth more (a stage multiplier is applied automatically).
-      </p>
     </div>
   )
 }
 
+
 function FullGuide() {
-  return (
-    <div className="space-y-3 text-sm text-muted-foreground">
-      <p>
-        Fill one row per match with your predicted winner, exact score, goal scorers, and match
-        statistics (possession, shots, xG, cards). Possession for the two teams must sum to 100.
-      </p>
-      <p>
-        Enter your tournament champion once in the <code>tournament_champion</code> column (any row).
-      </p>
-    </div>
-  )
+  return <LimitedGuide />
 }
