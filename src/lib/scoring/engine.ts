@@ -238,3 +238,17 @@ export function calculateMatchScore(
     maxPossible,
   }
 }
+
+export function calculateChampionScore(
+  predictedChampion: string,
+  actualChampion: string,
+  rules: Record<string, ScoringRule>
+): number {
+  if (!predictedChampion || !actualChampion) return 0
+  
+  if (normalizeTeamName(predictedChampion) === normalizeTeamName(actualChampion)) {
+    return rules['tournament_champion']?.points || 0
+  }
+  
+  return 0
+}
