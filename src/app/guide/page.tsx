@@ -24,7 +24,7 @@ export default function GuidePage() {
               </CardHeader>
               <CardContent className="text-muted-foreground">
                 <p>
-                  Go to the platform here: <a href="https://wcreflected.mulearn.org" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Click here</a>. Login with your MuFifa mail and password. If not registered, register here: <a href="https://mufifa.mulearn.org/register" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Click here</a>.
+                  Login with your MuFifa mail and password. If not registered, register here: <a href="https://mufifa.mulearn.org/register" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Click here</a>.
                 </p>
               </CardContent>
             </Card>
