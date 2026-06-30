@@ -11,8 +11,13 @@ export const metadata: Metadata = {
 export default async function LeaderboardPage() {
   const { rows } = await getLeaderboard(1, 100)
 
-  // Top 3 for podium
-  const top3 = rows.slice(0, 3)
+  const hasLiveScores = rows.some(row => Number(row.total_score) !== 0)
+  const placeholderPodium = [
+    { rank: 1, team_name: 'First', total_score: 0, accuracy: 0 },
+    { rank: 2, team_name: 'Second', total_score: 0, accuracy: 0 },
+    { rank: 3, team_name: 'Third', total_score: 0, accuracy: 0 },
+  ]
+  const top3 = hasLiveScores ? rows.slice(0, 3) : placeholderPodium
   
   return (
     <div className="container mx-auto py-10 px-4 space-y-12">
@@ -25,20 +30,19 @@ export default async function LeaderboardPage() {
         </p>
       </div>
 
-      {rows.length > 0 ? (
-        <>
-          <Podium topTeams={top3} />
-          
+      {!hasLiveScores && (
+        <div className="mx-auto max-w-4xl rounded-xl border border-red-500/40 bg-red-500/10 px-5 py-4 text-center text-sm font-semibold text-red-500 sm:text-base">
+          The leaderboard will update after the Round of 16 starts. Submit your predictions, be ready, and come back to see who is on top!
+        </div>
+      )}
+
+      <Podium topTeams={top3} />
+
+      {rows.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold tracking-tight">All Rankings</h2>
             <LeaderboardTable data={rows} />
           </div>
-        </>
-      ) : (
-        <div className="text-center py-20 glass-panel border-border/50 rounded-2xl">
-          <p className="text-muted-foreground text-lg">No predictions have been scored yet.</p>
-          <p className="text-sm text-muted-foreground mt-2">Check back after the first match concludes!</p>
-        </div>
       )}
     </div>
   )
