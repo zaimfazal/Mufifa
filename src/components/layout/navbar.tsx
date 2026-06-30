@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Trophy, LayoutDashboard, UploadCloud, ShieldAlert, LogOut, Menu } from 'lucide-react'
+import { Trophy, LayoutDashboard, UploadCloud, ShieldAlert, LogOut, Menu, BookOpen } from 'lucide-react'
 import { signOut } from '@/actions/auth'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -31,6 +31,9 @@ export async function Navbar() {
         <div className="hidden md:flex items-center space-x-6">
           <Link href="/leaderboard" className="text-sm font-medium text-muted-foreground hover:text-accent transition-colors flex items-center">
             <Trophy className="w-4 h-4 mr-1" /> Leaderboard
+          </Link>
+          <Link href="/guide" className="text-sm font-medium text-muted-foreground hover:text-accent transition-colors flex items-center">
+            <BookOpen className="w-4 h-4 mr-1" /> Guide
           </Link>
           {user && (
             <>
@@ -84,6 +87,10 @@ export async function Navbar() {
               
               <Link href="/leaderboard" className="text-sm font-medium text-foreground hover:text-accent transition-colors flex items-center">
                 <Trophy className="w-4 h-4 mr-2" /> Leaderboard
+              </Link>
+              
+              <Link href="/guide" className="text-sm font-medium text-foreground hover:text-accent transition-colors flex items-center">
+                <BookOpen className="w-4 h-4 mr-2" /> Guide
               </Link>
               
               {user && (
