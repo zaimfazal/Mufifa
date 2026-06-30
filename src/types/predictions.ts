@@ -1,5 +1,4 @@
 export interface CsvRow {
-  __requiresChampion?: boolean;
   match_id: string;
   home_team: string;
   away_team: string;
@@ -23,7 +22,6 @@ export interface CsvRow {
   predicted_red_home: string;
   predicted_red_away: string;
   confidence: string;
-  tournament_champion: string;
 }
 
 export interface GoalScorer {
@@ -88,5 +86,4 @@ export interface ValidationResult {
   valid: boolean;
   errors: ValidationError[];
   predictions: ParsedPrediction[];
-  champion: string;
 }

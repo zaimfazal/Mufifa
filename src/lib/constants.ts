@@ -31,8 +31,7 @@ export const CSV_COLUMNS = [
   'predicted_yellow_away',
   'predicted_red_home',
   'predicted_red_away',
-  'confidence',
-  'tournament_champion'
+  'confidence'
 ]
 
 // Limited-mode template: each match needs only the exact score and the set of

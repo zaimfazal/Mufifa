@@ -72,11 +72,11 @@ export async function uploadSubmission(formData: FormData) {
   // doesn't depend on a per-session read of the mode flag.
   let validationResult
   if (!isLimitedCsvText(text)) {
-    return { validationResult: { valid: false, errors: [{ row: 0, column: 'file', message: 'Please use the current template (match, exact score, scorer jersey numbers). Download it with "Get Template".' }], predictions: [], champion: '' } }
+    return { validationResult: { valid: false, errors: [{ row: 0, column: 'file', message: 'Please use the current template (match, exact score, scorer jersey numbers). Download it with "Get Template".' }], predictions: [] } }
   }
   const { rows, errors: parseErrors } = parseLimitedCsvText(text)
   if (parseErrors.length > 0) {
-    return { validationResult: { valid: false, errors: parseErrors.map((e) => ({ row: 0, column: 'file', message: e })), predictions: [], champion: '' } }
+    return { validationResult: { valid: false, errors: parseErrors.map((e) => ({ row: 0, column: 'file', message: e })), predictions: [] } }
   }
   validationResult = validateLimitedCsv(rows, matches || [])
 
@@ -239,15 +239,24 @@ export async function getMySubmission() {
 }
 
 export async function downloadTemplate() {
-  const supabase = await createClient()
-  const { data: matches } = await supabase
-    .from('matches')
-    .select('*')
-    .order('kickoff_time', { ascending: true })
+  try {
+    const supabase = await createClient()
+    const { data: matches, error } = await supabase
+      .from('matches')
+      .select('*')
+      .order('kickoff_time', { ascending: true })
 
-  // Always the limited template (exact score + scorer jersey numbers) for everyone.
-  const csvContent = generateTemplate(matches || [], true)
-  return csvContent
+    if (error) {
+      console.error('Supabase error in downloadTemplate:', error)
+      throw new Error('Database error')
+    }
+
+    const csvContent = generateTemplate(matches || [], true)
+    return csvContent
+  } catch (err) {
+    console.error('downloadTemplate error:', err)
+    throw err
+  }
 }
 
 export async function createTeam(formData: FormData) {

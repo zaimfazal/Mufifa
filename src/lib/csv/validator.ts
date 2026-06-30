@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { CsvRow, LimitedCsvRow, ValidationError, ValidationResult } from '@/types/predictions'
 import { TOURNAMENT_STAGES } from '../constants'
 import { parseGoalScorers, parseJerseyNumbers } from './parser'
+import { normalizeTeamName } from '../teams'
 
 type MatchReference = {
   match_code: string
@@ -59,9 +60,9 @@ function validateTeamName(row: CsvRow | LimitedCsvRow, rowNumber: number, matchR
     return []
   }
 
-  const winner = normalizedText(row.predicted_winner)
-  const home = normalizedText(homeTeam)
-  const away = normalizedText(awayTeam)
+  const winner = normalizeTeamName(row.predicted_winner)
+  const home = normalizeTeamName(homeTeam)
+  const away = normalizeTeamName(awayTeam)
 
   if (winner === home || winner === away || winner === 'home' || winner === 'away') return []
   if ((home === 'tbd' || away === 'tbd') && (validTeams.size === 0 || validTeams.has(winner))) return []
@@ -138,8 +139,7 @@ export function validateCsv(
   const result: ValidationResult = {
     valid: true,
     errors: [],
-    predictions: [],
-    champion: ''
+    predictions: []
   }
 
   const seenMatches = new Set<string>()
@@ -147,29 +147,8 @@ export function validateCsv(
   const validTeams = new Set<string>()
   if (validMatches.length > 0 && typeof validMatches[0] !== 'string') {
     ;(validMatches as MatchReference[]).forEach(match => {
-      validTeams.add(normalizedText(match.home_team))
-      validTeams.add(normalizedText(match.away_team))
-    })
-  }
-
-  // Look for champion in any row
-  const championRow = rows.find(r => r.tournament_champion?.trim())
-  if (championRow) {
-    result.champion = championRow.tournament_champion.trim()
-    if (validTeams.size > 0 && !validTeams.has(normalizedText(result.champion))) {
-      result.valid = false
-      result.errors.push({
-        row: rows.indexOf(championRow) + 2,
-        column: 'tournament_champion',
-        message: `Tournament champion must be one of the tournament teams`
-      })
-    }
-  } else if (rows.length > 0 && rows[0].__requiresChampion) {
-    result.valid = false
-    result.errors.push({
-      row: 0,
-      column: 'tournament_champion',
-      message: 'Tournament champion prediction is missing in the file'
+      validTeams.add(normalizeTeamName(match.home_team))
+      validTeams.add(normalizeTeamName(match.away_team))
     })
   }
 
@@ -293,7 +272,7 @@ export function validateLimitedCsv(
   rows: LimitedCsvRow[],
   validMatches: string[] | MatchReference[]
 ): ValidationResult {
-  const result: ValidationResult = { valid: true, errors: [], predictions: [], champion: '' }
+  const result: ValidationResult = { valid: true, errors: [], predictions: [] }
 
   const seenMatches = new Set<string>()
   const validMatchIds = getValidMatchIds(validMatches)
@@ -301,8 +280,8 @@ export function validateLimitedCsv(
   const stageToCodes = new Map<string, string[]>()
   if (validMatches.length > 0 && typeof validMatches[0] !== 'string') {
     ;(validMatches as MatchReference[]).forEach(match => {
-      validTeams.add(normalizedText(match.home_team))
-      validTeams.add(normalizedText(match.away_team))
+      validTeams.add(normalizeTeamName(match.home_team))
+      validTeams.add(normalizeTeamName(match.away_team))
       if (match.stage) {
         const stageLabel = TOURNAMENT_STAGES.find(s => s.value === match.stage)?.label || match.stage
         if (!stageToCodes.has(stageLabel)) stageToCodes.set(stageLabel, [])

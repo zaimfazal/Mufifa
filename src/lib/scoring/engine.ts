@@ -1,6 +1,6 @@
 import { Database } from '@/types/database'
 import { ScoringRule, MatchScoreResult } from '@/types/scoring'
-import { normalizePlayerName } from '../csv/name-normalizer'
+import { normalizeTeamName } from '../teams'
 
 type Prediction = Database['public']['Tables']['predictions']['Row']
 type Actual = Database['public']['Tables']['actual_results']['Row']
@@ -15,7 +15,7 @@ type Actual = Database['public']['Tables']['actual_results']['Row']
  */
 function normalizeOutcome(value: string | null, actual: Actual): string | null {
   if (!value) return null
-  const normalized = value.trim().toLowerCase()
+  const normalized = normalizeTeamName(value)
   if (normalized === 'draw') return 'draw'
   if (normalized === 'home' || normalized === 'away') return normalized
 
@@ -24,8 +24,8 @@ function normalizeOutcome(value: string | null, actual: Actual): string | null {
       matches?: { home_team?: string | null; away_team?: string | null } | null
     }
   ).matches
-  if (match?.home_team && normalized === match.home_team.trim().toLowerCase()) return 'home'
-  if (match?.away_team && normalized === match.away_team.trim().toLowerCase()) return 'away'
+  if (match?.home_team && normalized === normalizeTeamName(match.home_team)) return 'home'
+  if (match?.away_team && normalized === normalizeTeamName(match.away_team)) return 'away'
 
   return normalized
 }
@@ -237,20 +237,4 @@ export function calculateMatchScore(
     multiplier,
     maxPossible,
   }
-}
-
-// ---------------------------------------------------------------------------
-// Champion prediction (unchanged)
-// ---------------------------------------------------------------------------
-
-export function calculateChampionScore(
-  predicted: string,
-  actual: string,
-  rules: Record<string, ScoringRule>
-): number {
-  if (!predicted || !actual) return 0
-  if (normalizePlayerName(predicted, [actual], 3)) {
-    return rules['champion_prediction']?.points || 0
-  }
-  return 0
 }
