@@ -124,7 +124,11 @@ export function LoginForm() {
           </form>
         </Form>
       </CardContent>
-
+      <CardFooter className="flex justify-center border-t border-border/50 pt-4 mt-4">
+        <p className="text-sm text-muted-foreground">
+          If not registered, <Link href="https://mufifa.mulearn.org/register" className="text-primary hover:underline">register here</Link>.
+        </p>
+      </CardFooter>
     </Card>
   )
 }

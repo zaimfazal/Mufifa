@@ -29,7 +29,6 @@ export function ScoreBreakdownChart({
     { name: 'Scoreline', value: scoreline },
     { name: 'Goal Scorers', value: scorer },
     { name: 'Match Stats', value: stats },
-    { name: 'Champion', value: champion },
     { name: 'Confidence', value: Math.max(0, confidence) }, // Recharts doesn't handle negative well in pie
   ].filter(item => item.value > 0)
 

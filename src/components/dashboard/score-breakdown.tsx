@@ -22,15 +22,13 @@ export function ScoreBreakdown({
   champion,
   totalMatches,
 }: ScoreBreakdownProps) {
-  // Maximum points per match (assuming multiplier = 1 for display purposes):
-  //   outcome   = 5 (home) + 5 (away) + 20 (winner)  = 30
-  //   scoreline = 10 (home_goals) + 10 (away_goals) + 15 (goal_diff) = 35
-  //   scorer    = 30 (home) + 30 (away) + 250 (all_bonus) = 310
-  //   champion  = 250 (tournament-level, not per-match)
+  // Knockout stages multipliers: R16 (8 * 1), QF (4 * 2), SF (2 * 3), 3rd (1 * 2.5), Final (1 * 5)
+  // Total multiplier sum = 29.5
+  const effectiveMatches = totalMatches === 16 ? 29.5 : totalMatches;
   const MAX_VALUES = {
-    winner: totalMatches * 30,
-    scoreline: totalMatches * 35,
-    scorer: totalMatches * 310,
+    winner: effectiveMatches * 30,
+    scoreline: effectiveMatches * 35,
+    scorer: effectiveMatches * 310,
     champion: 250,
   }
 
@@ -38,7 +36,6 @@ export function ScoreBreakdown({
     { name: 'Outcome',   earned: winner,   max: MAX_VALUES.winner,    color: 'bg-green-500' },
     { name: 'Scoreline', earned: scoreline, max: MAX_VALUES.scoreline, color: 'bg-blue-500' },
     { name: 'Scorers',   earned: scorer,    max: MAX_VALUES.scorer,    color: 'bg-amber-500' },
-    { name: 'Champion',  earned: champion,  max: MAX_VALUES.champion,  color: 'bg-pink-500' },
   ]
 
   const chartData = categories.map(c => ({ name: c.name, Score: c.earned }))
