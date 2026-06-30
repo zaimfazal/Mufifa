@@ -64,8 +64,11 @@ function validateTeamName(row: CsvRow | LimitedCsvRow, rowNumber: number, matchR
   const home = normalizeTeamName(homeTeam)
   const away = normalizeTeamName(awayTeam)
 
+  // If either team is TBD (not yet announced), allow any predicted winner —
+  // the admin will update the real team names after the fixtures are decided.
+  if (home === 'tbd' || away === 'tbd') return []
+
   if (winner === home || winner === away || winner === 'home' || winner === 'away') return []
-  if ((home === 'tbd' || away === 'tbd') && (validTeams.size === 0 || validTeams.has(winner))) return []
 
   return [{
     row: rowNumber,
@@ -73,6 +76,7 @@ function validateTeamName(row: CsvRow | LimitedCsvRow, rowNumber: number, matchR
     message: `Predicted winner must be ${homeTeam}, ${awayTeam}, or draw`
   }]
 }
+
 
 function validatePlayerNames(row: CsvRow, rowNumber: number): ValidationError[] {
   const errors: ValidationError[] = []

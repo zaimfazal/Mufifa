@@ -63,7 +63,7 @@ export function LoginForm() {
           Login
         </CardTitle>
         <CardDescription className="text-center text-muted-foreground">
-          Enter your email and password to access your account
+          Enter the email and password you used to register in μFIFA
         </CardDescription>
       </CardHeader>
       <CardContent>
