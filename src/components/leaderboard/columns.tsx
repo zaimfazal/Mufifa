@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ColumnHeaderHint, LEADERBOARD_COLUMN_HINTS } from "@/components/leaderboard/column-header-hint"
 import { formatScore, formatPercentage } from "@/lib/utils"
 
 export type LeaderboardRow = {
@@ -85,17 +86,23 @@ export const columns: ColumnDef<LeaderboardRow>[] = [
   },
   {
     accessorKey: "winner_score",
-    header: "Outcome",
+    header: () => (
+      <ColumnHeaderHint label="Outcome" hint={LEADERBOARD_COLUMN_HINTS.outcome} />
+    ),
     cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("winner_score"))}</div>,
   },
   {
     accessorKey: "scoreline_score",
-    header: "Scoreline",
+    header: () => (
+      <ColumnHeaderHint label="Scoreline" hint={LEADERBOARD_COLUMN_HINTS.scoreline} />
+    ),
     cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("scoreline_score"))}</div>,
   },
   {
     accessorKey: "scorer_score",
-    header: "Scorers",
+    header: () => (
+      <ColumnHeaderHint label="Scorers" hint={LEADERBOARD_COLUMN_HINTS.scorers} />
+    ),
     cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("scorer_score"))}</div>,
   },
 

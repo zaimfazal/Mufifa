@@ -3,6 +3,11 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { ALL_TOURNAMENT_STAGES } from '@/lib/constants'
+import { getDynamicPrediction } from '@/lib/scoring/calculator'
+import { calculateMatchScore, calculateMaxBreakdown } from '@/lib/scoring/engine'
+import { loadScoringRules } from '@/lib/scoring/rules-loader'
+import { TournamentStage } from '@/types/database'
 
 export async function updateTeamName(formData: FormData) {
   const teamName = formData.get('team_name') as string
@@ -56,5 +61,62 @@ export async function getDashboardPredictions(teamId: string) {
       actual_away_score: actual?.away_score ?? null,
     }
   })
+}
+
+export type StageScorePoint = {
+  stage: string
+  score: number
+}
+
+export type DashboardScoreAnalysis = {
+  maxOutcome: number
+  maxScoreline: number
+  maxScorer: number
+  stageScores: StageScorePoint[]
+}
+
+export async function getDashboardScoreAnalysis(teamId: string): Promise<DashboardScoreAnalysis> {
+  const supabase = await createClient()
+  const rules = await loadScoringRules()
+
+  const [{ data: predictions }, { data: actuals }] = await Promise.all([
+    supabase.from('predictions').select('*, matches(stage)').eq('team_id', teamId),
+    supabase
+      .from('actual_results')
+      .select('*, matches(multiplier, home_team, away_team, stage)')
+      .not('home_score', 'is', null)
+      .not('away_score', 'is', null),
+  ])
+
+  let maxOutcome = 0
+  let maxScoreline = 0
+  let maxScorer = 0
+  const stageTotals = new Map<TournamentStage, number>()
+
+  for (const actual of actuals || []) {
+    const pred = getDynamicPrediction(predictions || [], actual)
+    if (!pred) continue
+
+    const match = actual.matches as { multiplier: number; stage: TournamentStage }
+    const multiplier = match.multiplier
+    const result = calculateMatchScore(pred, actual, rules, multiplier)
+    const maxBreakdown = calculateMaxBreakdown(rules, multiplier)
+
+    maxOutcome += maxBreakdown.outcome
+    maxScoreline += maxBreakdown.scoreline
+    maxScorer += maxBreakdown.scorer
+
+    const stage = match.stage
+    stageTotals.set(stage, (stageTotals.get(stage) || 0) + result.multipliedTotal)
+  }
+
+  const stageScores = ALL_TOURNAMENT_STAGES
+    .filter(({ value }) => stageTotals.has(value))
+    .map(({ value, label }) => ({
+      stage: label,
+      score: stageTotals.get(value) || 0,
+    }))
+
+  return { maxOutcome, maxScoreline, maxScorer, stageScores }
 }
 

@@ -1,5 +1,5 @@
 import { Database } from '@/types/database'
-import { ScoringRule, MatchScoreResult } from '@/types/scoring'
+import { ScoringRule, MatchScoreResult, MatchScoreBreakdown } from '@/types/scoring'
 import { normalizePlayerName } from '../csv/name-normalizer'
 
 type Prediction = Database['public']['Tables']['predictions']['Row']
@@ -126,23 +126,38 @@ function scorerMatchPoints(
 // Max-possible per match
 // ---------------------------------------------------------------------------
 
+export function calculateMaxBreakdown(
+  rules: Record<string, ScoringRule>,
+  multiplier: number
+): MatchScoreBreakdown {
+  return {
+    outcome:
+      ((rules['home_team_correct']?.points || 0) +
+        (rules['away_team_correct']?.points || 0) +
+        (rules['predicted_winner_correct']?.points || 0)) *
+      multiplier,
+    scoreline:
+      ((rules['home_goals_correct']?.points || 0) +
+        (rules['away_goals_correct']?.points || 0) +
+        (rules['goal_difference_correct']?.points || 0)) *
+      multiplier,
+    scorer:
+      ((rules['scorer_match_home']?.points || 0) +
+        (rules['scorer_match_away']?.points || 0) +
+        (rules['all_correct_bonus']?.points || 0)) *
+      multiplier,
+    stats: 0,
+    penalty: 0,
+    confidence: 0,
+  }
+}
+
 export function calculateMaxPossibleScore(
   rules: Record<string, ScoringRule>,
   multiplier: number
 ): number {
-  const KEYS = [
-    'home_team_correct',
-    'away_team_correct',
-    'predicted_winner_correct',
-    'home_goals_correct',
-    'away_goals_correct',
-    'goal_difference_correct',
-    'scorer_match_home',
-    'scorer_match_away',
-    'all_correct_bonus',
-  ]
-  const perMatchMax = KEYS.reduce((sum, k) => sum + (rules[k]?.points || 0), 0)
-  return perMatchMax * multiplier
+  const breakdown = calculateMaxBreakdown(rules, multiplier)
+  return breakdown.outcome + breakdown.scoreline + breakdown.scorer
 }
 
 // ---------------------------------------------------------------------------

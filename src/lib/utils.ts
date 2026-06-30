@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { TournamentStage } from "@/types/database"
-import { TOURNAMENT_STAGES } from "./constants"
+import { ALL_TOURNAMENT_STAGES } from "./constants"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -30,5 +30,5 @@ export function formatDate(dateStr: string): string {
 }
 
 export function getStageLabel(stage: TournamentStage): string {
-  return TOURNAMENT_STAGES.find((s) => s.value === stage)?.label || stage
+  return ALL_TOURNAMENT_STAGES.find((s) => s.value === stage)?.label || stage
 }

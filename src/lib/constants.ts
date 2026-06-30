@@ -1,5 +1,15 @@
 import { TournamentStage } from '@/types/database'
 
+export const ALL_TOURNAMENT_STAGES: { value: TournamentStage; label: string }[] = [
+  { value: 'group_stage', label: 'Group Stage' },
+  { value: 'round_of_32', label: 'Round of 32' },
+  { value: 'round_of_16', label: 'Round of 16' },
+  { value: 'quarter_final', label: 'Quarter Final' },
+  { value: 'semi_final', label: 'Semi Final' },
+  { value: 'third_place', label: 'Third Place' },
+  { value: 'final', label: 'Final' },
+]
+
 export const TOURNAMENT_STAGES: { value: TournamentStage; label: string; defaultMultiplier: number }[] = [
   { value: 'round_of_16', label: 'Round of 16', defaultMultiplier: 1.0 },
   { value: 'quarter_final', label: 'Quarter Final', defaultMultiplier: 2.0 },

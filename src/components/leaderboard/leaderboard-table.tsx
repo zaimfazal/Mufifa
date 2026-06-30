@@ -21,6 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { ColumnHeaderHint, LEADERBOARD_COLUMN_HINTS } from "@/components/leaderboard/column-header-hint"
 import { formatScore, formatPercentage } from "@/lib/utils"
 
 interface LeaderboardTableProps {
@@ -77,17 +79,23 @@ export function LeaderboardTable({ data }: LeaderboardTableProps) {
     },
     {
       accessorKey: "winner_score",
-      header: "Winner",
+      header: () => (
+        <ColumnHeaderHint label="Outcome" hint={LEADERBOARD_COLUMN_HINTS.outcome} />
+      ),
       cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("winner_score") as number)}</div>,
     },
     {
       accessorKey: "scoreline_score",
-      header: "Scoreline",
+      header: () => (
+        <ColumnHeaderHint label="Scoreline" hint={LEADERBOARD_COLUMN_HINTS.scoreline} />
+      ),
       cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("scoreline_score") as number)}</div>,
     },
     {
       accessorKey: "scorer_score",
-      header: "Scorers",
+      header: () => (
+        <ColumnHeaderHint label="Scorers" hint={LEADERBOARD_COLUMN_HINTS.scorers} />
+      ),
       cell: ({ row }) => <div className="text-muted-foreground">{formatScore(row.getValue("scorer_score") as number)}</div>,
     },
 
@@ -106,6 +114,7 @@ export function LeaderboardTable({ data }: LeaderboardTableProps) {
   })
 
   return (
+    <TooltipProvider delay={200}>
     <div className="rounded-md border border-border/50 overflow-hidden bg-card/50 backdrop-blur">
       <div className="overflow-x-auto">
         <Table>
@@ -146,6 +155,7 @@ export function LeaderboardTable({ data }: LeaderboardTableProps) {
         </Table>
       </div>
     </div>
+    </TooltipProvider>
   )
 }
 

@@ -6,7 +6,7 @@ import { RecentActivity } from '@/components/dashboard/recent-activity'
 import { MatchPredictionsTable } from '@/components/dashboard/match-predictions-table'
 import { Badge } from '@/components/ui/badge'
 import { EditTeamName } from '@/components/dashboard/edit-team-name'
-import { getDashboardPredictions } from '@/actions/dashboard'
+import { getDashboardPredictions, getDashboardScoreAnalysis } from '@/actions/dashboard'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -46,11 +46,9 @@ export default async function DashboardPage() {
     .limit(5)
 
   const predictions = await getDashboardPredictions(team.id)
-  
-  const { count: totalMatches } = await supabase.from('matches').select('*', { count: 'exact', head: true })
+  const scoreAnalysis = await getDashboardScoreAnalysis(team.id)
 
-  const { data: settings } = await supabase.from('competition_settings').select('submission_deadline, tier1_only_mode').single()
-  const tier1Only = settings?.tier1_only_mode === true
+  const { data: settings } = await supabase.from('competition_settings').select('submission_deadline').single()
   const isClosed = settings?.submission_deadline ? new Date() > new Date(settings.submission_deadline) : false
 
   const { count: teamPredictionCount } = await supabase
@@ -105,11 +103,10 @@ export default async function DashboardPage() {
             winner={leaderboard?.winner_score || 0}
             scoreline={leaderboard?.scoreline_score || 0}
             scorer={leaderboard?.scorer_score || 0}
-            stats={leaderboard?.stats_score || 0}
-            champion={leaderboard?.champion_score || 0}
-            confidence={leaderboard?.confidence_score || 0}
-            totalMatches={totalMatches || 0}
-            tier1Only={tier1Only}
+            maxOutcome={scoreAnalysis.maxOutcome}
+            maxScoreline={scoreAnalysis.maxScoreline}
+            maxScorer={scoreAnalysis.maxScorer}
+            stageScores={scoreAnalysis.stageScores}
           />
         </div>
         <div className="lg:col-span-1 space-y-6">
