@@ -22,6 +22,8 @@ export interface CsvRow {
   predicted_red_home: string;
   predicted_red_away: string;
   confidence: string;
+  __requiresChampion?: boolean;
+  tournament_champion?: string;
 }
 
 export interface GoalScorer {
