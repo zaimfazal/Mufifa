@@ -77,7 +77,7 @@ export default async function Home(props: { searchParams?: SearchParams }) {
                 ? "Submissions Closed: The tournament is officially underway."
                 : settings?.submission_deadline
                   ? `Submission Deadline: ${new Date(settings.submission_deadline).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`
-                  : "Submission Closes on July 3rd, 2026 11:59 PM IST"}
+                  : "Submission Closes on July 4th, 2026 7:00 PM IST"}
             </h3>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               {user ? (
