@@ -77,7 +77,6 @@ Applied after match score calculation.
 | ------------- | ---------- |
 | Group Stage   | 1.0        |
 | Round of 32   | 1.2        |
-| Round of 16   | 1.5        |
 | Quarter Final | 2.0        |
 | Semi Final    | 3.0        |
 | Third Place   | 2.5        |

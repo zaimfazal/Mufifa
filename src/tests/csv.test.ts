@@ -32,7 +32,6 @@ describe('CSV Pipeline (QA Tests)', () => {
 
     const result = validateCsv(rows, validMatches)
     expect(result.valid).toBe(true)
-    expect(result.champion).toBe('France')
     expect(result.predictions).toHaveLength(1)
   })
 

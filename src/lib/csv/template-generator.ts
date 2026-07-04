@@ -19,6 +19,8 @@ export function generateTemplate(matches: MatchRow[], limited = false): string {
     const rowValues = templateColumns.map(col => {
       if (col === 'match_id') return `"${match.match_code}"`
       if (col === 'stage') return `"${stageLabel}"`
+      if (col === 'home_team') return `"${match.home_team}"`
+      if (col === 'away_team') return `"${match.away_team}"`
       return ''
     })
 

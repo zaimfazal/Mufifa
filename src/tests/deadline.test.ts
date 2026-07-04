@@ -9,7 +9,7 @@ vi.mock('@/lib/supabase/server', () => ({
 async function checkDeadlineLogic(settingsRow: { submission_deadline?: string | null }) {
   if (settingsRow?.submission_deadline) {
     if (new Date() > new Date(settingsRow.submission_deadline)) {
-      return { error: 'Submissions are closed. The prediction window ended when the Round of 32 began.' }
+      return { error: 'Submissions are closed. The prediction window ended when the Quarter Finals began.' }
     }
   }
   return { success: true }
@@ -42,7 +42,7 @@ describe('Submission Deadline Enforcement', () => {
     const settings = { submission_deadline: '2026-06-28T16:00:00Z' }
     
     const result = await checkDeadlineLogic(settings)
-    expect(result.error).toBe('Submissions are closed. The prediction window ended when the Round of 16 began.')
+    expect(result.error).toBe('Submissions are closed. The prediction window ended when the Quarter Finals began.')
   })
 
   it('rejects submissions well after the deadline', async () => {
@@ -52,6 +52,6 @@ describe('Submission Deadline Enforcement', () => {
     const settings = { submission_deadline: '2026-06-28T16:00:00Z' }
     
     const result = await checkDeadlineLogic(settings)
-    expect(result.error).toBe('Submissions are closed. The prediction window ended when the Round of 16 began.')
+    expect(result.error).toBe('Submissions are closed. The prediction window ended when the Quarter Finals began.')
   })
 })

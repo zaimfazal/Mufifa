@@ -56,7 +56,7 @@ export async function uploadSubmission(formData: FormData) {
       return { error: 'Submissions are currently closed by administrators.' }
     }
     if (settings.submission_deadline && new Date() > new Date(settings.submission_deadline)) {
-      return { error: 'Submissions are closed. The prediction window ended when the Round of 16 began.' }
+      return { error: 'Submissions are closed. The prediction window ended when the Quarter Finals began.' }
     }
   }
 
@@ -66,6 +66,7 @@ export async function uploadSubmission(formData: FormData) {
   const { data: matches } = await supabase
     .from('matches')
     .select('match_code, home_team, away_team, stage')
+    .in('stage', ['quarter_final', 'semi_final', 'third_place', 'final'])
 
   // The active competition uses the limited template (exact score + scorer
   // jersey numbers) for everyone. We always parse/validate in that format so it
@@ -244,6 +245,7 @@ export async function downloadTemplate() {
     const { data: matches, error } = await supabase
       .from('matches')
       .select('*')
+      .in('stage', ['quarter_final', 'semi_final', 'third_place', 'final'])
       .order('kickoff_time', { ascending: true })
 
     if (error) {

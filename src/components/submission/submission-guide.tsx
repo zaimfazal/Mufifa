@@ -41,7 +41,7 @@ function LimitedGuide() {
       <section>
         <p className="text-muted-foreground">
           Complete the prediction template by filling in the knockout stage from the{' '}
-          <strong>Round of 16</strong> through the <strong>Final</strong>.
+          <strong>Quarter Finals</strong> through the <strong>Final</strong>.
         </p>
       </section>
 

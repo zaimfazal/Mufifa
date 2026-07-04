@@ -32,7 +32,7 @@ export default async function LeaderboardPage() {
 
       {!hasLiveScores && (
         <div className="mx-auto max-w-4xl rounded-xl border border-red-500/40 bg-red-500/10 px-5 py-4 text-center text-sm font-semibold text-red-500 sm:text-base">
-          The leaderboard will update after the Round of 16 starts. Submit your predictions, be ready, and come back to see who is on top!
+          The leaderboard will update after the Quarter Finals starts. Submit your predictions, be ready, and come back to see who is on top!
         </div>
       )}
 

@@ -47,7 +47,7 @@ export default function GuidePage() {
               <CardContent className="text-muted-foreground">
                 <p className="mb-2">Download the official CSV template from the Submit page. Run your model locally, then fill it in as follows:</p>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li>One row per match, covering all 16 knockout matches from Round of 16 onward</li>
+                  <li>One row per match, covering all 8 knockout matches from Quarter Finals onward</li>
                   <li>Predict the match outcome</li>
                   <li>Predict the exact final score for each match (e.g. 2 : 1). Points awarded only when both numbers are exactly right</li>
                   <li>List the jersey numbers of the goal scorers per team. Points awarded when your set of scorers exactly matches the real scorers</li>

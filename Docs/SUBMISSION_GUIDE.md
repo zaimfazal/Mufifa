@@ -84,8 +84,7 @@ predicted_scorers_away = 9
 | Exact score | 40 |
 | Exact scorer set | 25 |
 
-These are multiplied by the match's stage multiplier (Round of 16 ×1.5,
-Quarter Final ×2.0, Semi Final ×3.0, Third Place ×2.5, Final ×5.0), so the same
+These are multiplied by the match's stage multiplier (Quarter Finals ×2.0, Semi Final ×3.0, Third Place ×2.5, Final ×5.0), so the same
 correct prediction is worth more in later rounds.
 
 ---

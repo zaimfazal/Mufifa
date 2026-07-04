@@ -125,7 +125,6 @@ Prediction scope:
 
 * Group Stage
 * Round of 32
-* Round of 16
 * Quarter Finals
 * Semi Finals
 * Third Place Match
@@ -438,8 +437,6 @@ Correct Champion = 250
 Group Stage = 1.0x
 
 Round of 32 = 1.2x
-
-Round of 16 = 1.5x
 
 Quarter Final = 2.0x
 

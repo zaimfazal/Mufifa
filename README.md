@@ -8,7 +8,7 @@ A Kaggle-style machine learning prediction platform for the FIFA World Cup 2026.
 
 ## What This Is
 
-µFifa '26 is a competitive platform where data scientists, ML engineers, and football analysts develop machine learning models to predict FIFA World Cup 2026 outcomes. Participants upload predictions (exact final scores and goal scorers) for all 16 knockout-stage matches, and the platform automatically evaluates accuracy against real tournament results. Rankings update in real-time after each match, with later stages carrying higher multipliers (Final = 5.0x).
+µFifa '26 is a competitive platform where data scientists, ML engineers, and football analysts develop machine learning models to predict FIFA World Cup 2026 outcomes. Participants upload predictions (exact final scores and goal scorers) for all 8 knockout-stage matches, and the platform automatically evaluates accuracy against real tournament results. Rankings update in real-time after each match, with later stages carrying higher multipliers (Final = 5.0x).
 
 Organized as part of the **MuLearn Hackathon ecosystem** and powered by **Reflections** — this is a pure prediction evaluation platform, not an ML training service.
 
@@ -145,13 +145,13 @@ pnpm lint
 
 ### For Organizers
 - **Submission Management** — Lock/unlock submission period, bulk-approve/reject uploads
-- **Scoring Configuration** — Define stage multipliers (Round of 16=1.0x, Final=5.0x)
+- **Scoring Configuration** — Define stage multipliers (Quarter Finals=2.0x, Final=5.0x)
 - **Match & Result Data** — Manage tournament fixtures and actual outcomes
 - **Recalculation Engine** — Automatic or manual recalc triggers after match completion
 - **Rate Limiting** — Upstash-backed guards on upload endpoints
 
 ### Tournament Scope
-- **Knockout Stages:** Round of 16, Quarter Finals, Semi Finals, Third Place, Final
+- **Knockout Stages:** Quarter Finals, Semi Finals, Third Place, Final
 - **Per-Match Prediction:** Exact final score + exact goal scorers (by jersey number)
 - **Points:** Only exact matches award points; multipliers increase by stage
 - **Fair Play:** Any legal data source + ML/DL encouraged; platform data manipulation = disqualification

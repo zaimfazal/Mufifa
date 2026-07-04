@@ -22,9 +22,9 @@ export function ScoreBreakdown({
   champion,
   totalMatches,
 }: ScoreBreakdownProps) {
-  // Knockout stages multipliers: R16 (8 * 1), QF (4 * 2), SF (2 * 3), 3rd (1 * 2.5), Final (1 * 5)
-  // Total multiplier sum = 29.5
-  const effectiveMatches = totalMatches === 16 ? 29.5 : totalMatches;
+  // Knockout stages multipliers: QF (4 * 2), SF (2 * 3), 3rd (1 * 2.5), Final (1 * 5)
+  // Total multiplier sum = 21.5
+  const effectiveMatches = totalMatches === 8 ? 21.5 : totalMatches;
   const MAX_VALUES = {
     winner: effectiveMatches * 30,
     scoreline: effectiveMatches * 35,
