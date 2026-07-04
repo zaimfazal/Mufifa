@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { Trophy, LayoutDashboard, UploadCloud, ShieldAlert, LogOut, Menu, BookOpen } from 'lucide-react'
+import { Trophy, LayoutDashboard, UploadCloud, ShieldAlert, LogOut, Menu, BookOpen, MessageCircle } from 'lucide-react'
 import { signOut } from '@/actions/auth'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -29,6 +29,9 @@ export async function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center space-x-6">
+          <a href="https://chat.whatsapp.com/HrExspFw2lWHtkUqidQiHZ?s=cl&p=a&ilr=0&amv=1" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-muted-foreground hover:text-green-500 transition-colors flex items-center">
+            <MessageCircle className="w-4 h-4 mr-1" /> Community
+          </a>
           <Link href="/leaderboard" className="text-sm font-medium text-muted-foreground hover:text-accent transition-colors flex items-center">
             <Trophy className="w-4 h-4 mr-1" /> Leaderboard
           </Link>
@@ -84,6 +87,10 @@ export async function Navbar() {
                 </div>
                 <span className="font-extrabold tracking-tight text-xl text-foreground">Fifa &apos;26</span>
               </Link>
+              
+              <a href="https://chat.whatsapp.com/HrExspFw2lWHtkUqidQiHZ?s=cl&p=a&ilr=0&amv=1" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-foreground hover:text-green-500 transition-colors flex items-center">
+                <MessageCircle className="w-4 h-4 mr-2" /> Community
+              </a>
               
               <Link href="/leaderboard" className="text-sm font-medium text-foreground hover:text-accent transition-colors flex items-center">
                 <Trophy className="w-4 h-4 mr-2" /> Leaderboard
