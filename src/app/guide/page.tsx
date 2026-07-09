@@ -10,7 +10,7 @@ export default function GuidePage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-extrabold mb-8 tracking-tight text-foreground neon-text-green">Guide & Resources</h1>
-      
+
       <div className="space-y-8">
         <section>
           <h2 className="text-2xl font-bold mb-4 flex items-center text-foreground">
@@ -72,7 +72,7 @@ export default function GuidePage() {
               </CardHeader>
               <CardContent className="text-muted-foreground">
                 <p>
-                  Take a screenshot of your successful submission. Post it in task-dropbox channel with your nickname, tagged <strong>#mufifa2026-predict</strong> to get μLearn Karma Points and μPoints from Mufifa. (You need to be registered on μLearn and μFIFA to claim those points and receive swag.)
+                  Take a screenshot of your successful submission. Post it in task-dropbox channel with your nickname, tagged <strong>#mufifa2026-reflected-predict</strong> to get μLearn Karma Points and μPoints from Mufifa. (You need to be registered on μLearn and μFIFA to claim those points and receive swag.)
                 </p>
               </CardContent>
             </Card>
