@@ -9,11 +9,37 @@ import { revalidatePath } from 'next/cache'
 import { globalRateLimiter } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 
+const SUBMISSION_CLOSED_MESSAGE = 'Submission is closed.'
+const PREDICTION_WINDOW_CLOSES_AT = '2026-06-28T16:00:00Z'
+
+function isSubmissionClosed(settings: { submissions_open?: boolean | null; submission_deadline?: string | null } | null) {
+  const deadline = settings?.submission_deadline || PREDICTION_WINDOW_CLOSES_AT
+  return settings?.submissions_open === false
+    || new Date() > new Date(deadline)
+}
+
 export async function uploadSubmission(formData: FormData) {
   const file = formData.get('file') as File
   const githubLink = formData.get('github_link') as string
   
   if (!file) return { error: 'No file provided' }
+  
+  const supabase = await createClient()
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  // Check the global submission window before any CSV parsing or validation so
+  // closed submissions never show format errors.
+  const { data: settings } = await supabase
+    .from('competition_settings')
+    .select('submission_deadline, submissions_open, tier1_only_mode')
+    .maybeSingle()
+
+  if (isSubmissionClosed(settings)) {
+    return { error: SUBMISSION_CLOSED_MESSAGE }
+  }
+
   if (!githubLink || githubLink.trim() === '') return { error: 'GitHub repository link is required.' }
   
   if (file.type !== 'text/csv' && file.type !== 'application/vnd.ms-excel') {
@@ -23,11 +49,6 @@ export async function uploadSubmission(formData: FormData) {
   if (file.size > 5 * 1024 * 1024) {
     return { error: 'File size exceeds 5MB limit.' }
   }
-  
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
 
   // Rate limiting: max 5 requests per 1 minute per user
   const { success } = await globalRateLimiter.check(`upload_${user.id}`, 5, 60 * 1000)
@@ -45,21 +66,6 @@ export async function uploadSubmission(formData: FormData) {
   if (!team) return { error: 'No team found. Please create a team first.' }
   if (team.submission_locked) return { error: 'Your submission has been locked by an administrator.' }
 
-  // Check global submission deadline + active scoring mode
-  const { data: settings } = await supabase
-    .from('competition_settings')
-    .select('submission_deadline, submissions_open, tier1_only_mode')
-    .single()
-
-  if (settings) {
-    if (settings.submissions_open === false) {
-      return { error: 'Submissions are currently closed by administrators.' }
-    }
-    if (settings.submission_deadline && new Date() > new Date(settings.submission_deadline)) {
-      return { error: 'Submissions are closed. The prediction window ended when the Quarter Finals began.' }
-    }
-  }
-
   const text = await file.text()
 
   // Fetch valid matches
@@ -71,7 +77,6 @@ export async function uploadSubmission(formData: FormData) {
   // The active competition uses the limited template (exact score + scorer
   // jersey numbers) for everyone. We always parse/validate in that format so it
   // doesn't depend on a per-session read of the mode flag.
-  let validationResult
   if (!isLimitedCsvText(text)) {
     return { validationResult: { valid: false, errors: [{ row: 0, column: 'file', message: 'Please use the current template (match, exact score, scorer jersey numbers). Download it with "Get Template".' }], predictions: [] } }
   }
@@ -79,7 +84,7 @@ export async function uploadSubmission(formData: FormData) {
   if (parseErrors.length > 0) {
     return { validationResult: { valid: false, errors: parseErrors.map((e) => ({ row: 0, column: 'file', message: e })), predictions: [] } }
   }
-  validationResult = validateLimitedCsv(rows, matches || [])
+  const validationResult = validateLimitedCsv(rows, matches || [])
 
   if (!validationResult.valid) {
     // Record failed submission attempt. submissions has UNIQUE(team_id), so
@@ -242,6 +247,15 @@ export async function getMySubmission() {
 export async function downloadTemplate() {
   try {
     const supabase = await createClient()
+    const { data: settings } = await supabase
+      .from('competition_settings')
+      .select('submission_deadline, submissions_open')
+      .maybeSingle()
+
+    if (isSubmissionClosed(settings)) {
+      return { error: SUBMISSION_CLOSED_MESSAGE }
+    }
+
     const { data: matches, error } = await supabase
       .from('matches')
       .select('*')
@@ -254,7 +268,7 @@ export async function downloadTemplate() {
     }
 
     const csvContent = generateTemplate(matches || [], true)
-    return csvContent
+    return { csvContent }
   } catch (err) {
     console.error('downloadTemplate error:', err)
     throw err

@@ -9,10 +9,11 @@ import { SubmissionGuide } from '@/components/submission/submission-guide'
 import { uploadSubmission, downloadTemplate, createTeam } from '@/actions/submission'
 import { ValidationResult } from '@/types/predictions'
 import { Button } from '@/components/ui/button'
-import { Download, Users } from 'lucide-react'
+import { Download, Lock, Users } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -26,7 +27,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-export function SubmissionClient({ initialData, limited = false }: { initialData: any, limited?: boolean }) {
+export function SubmissionClient({
+  initialData,
+  limited = false,
+  isSubmissionClosed = false,
+}: {
+  initialData: any
+  limited?: boolean
+  isSubmissionClosed?: boolean
+}) {
   const [file, setFile] = useState<File | null>(null)
   const [githubLink, setGithubLink] = useState(initialData?.team?.github_link || '')
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
@@ -34,11 +43,21 @@ export function SubmissionClient({ initialData, limited = false }: { initialData
   const [isDownloading, setIsDownloading] = useState(false)
 
   const handleFileSelect = (selectedFile: File) => {
+    if (isSubmissionClosed) {
+      toast.error('Submission is closed.')
+      return
+    }
+
     setFile(selectedFile)
     setValidationResult(null) // Reset validation when new file selected
   }
 
   const handleValidateAndSubmit = () => {
+    if (isSubmissionClosed) {
+      toast.error('Submission is closed.')
+      return
+    }
+
     if (!file) return
 
     startTransition(async () => {
@@ -64,9 +83,20 @@ export function SubmissionClient({ initialData, limited = false }: { initialData
   }
 
   const handleDownloadTemplate = async () => {
+    if (isSubmissionClosed) {
+      toast.error('Submission is closed.')
+      return
+    }
+
     setIsDownloading(true)
     try {
-      const csvContent = await downloadTemplate()
+      const result = await downloadTemplate()
+      if ('error' in result) {
+        toast.error(result.error)
+        return
+      }
+
+      const csvContent = result.csvContent
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const link = document.createElement('a')
       const url = URL.createObjectURL(blob)
@@ -93,6 +123,18 @@ export function SubmissionClient({ initialData, limited = false }: { initialData
         window.location.reload()
       }
     })
+  }
+
+  if (isSubmissionClosed) {
+    return (
+      <Alert variant="destructive" className="glass-panel border-destructive/40">
+        <Lock className="w-4 h-4" />
+        <AlertTitle>Submission is closed.</AlertTitle>
+        <AlertDescription>
+          CSV templates can no longer be downloaded or submitted.
+        </AlertDescription>
+      </Alert>
+    )
   }
 
   // 1. User has no team
