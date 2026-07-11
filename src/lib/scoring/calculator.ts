@@ -193,7 +193,8 @@ export async function recalculateAll() {
   }
 }
 
-export async function recalculateForMatch() {
+export async function recalculateForMatch(matchId?: string) {
+  void matchId
   await recalculateAll()
 }
 
