@@ -5,10 +5,13 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { recalculateAll, recalculateForMatch } from '@/lib/scoring/calculator'
 import { requireAdmin } from './admin/require-admin'
+import { ensureDefaultScoringRules } from './admin/scoring'
 
 export async function adminRecalculateAll() {
   try {
     await requireAdmin()
+    const ensured = await ensureDefaultScoringRules()
+    if (ensured.error) throw new Error(`Failed to ensure scoring rules: ${ensured.error}`)
     await recalculateAll()
     revalidatePath('/leaderboard')
     revalidatePath('/dashboard')

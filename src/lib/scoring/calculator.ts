@@ -2,6 +2,7 @@
 import { createAdminClient } from '../supabase/admin'
 import { loadScoringRules } from './rules-loader'
 import { calculateMatchScore, calculateChampionScore } from './engine'
+import { normalizeTeamName } from '../teams'
 export function getDynamicPrediction(teamPreds: any[], actual: any) {
   const actualStage = (actual.matches as any).stage
   const actualHome = (actual.matches as any).home_team
@@ -10,10 +11,10 @@ export function getDynamicPrediction(teamPreds: any[], actual: any) {
   let match = teamPreds.find(p => {
     if ((p.matches as any).stage !== actualStage) return false
     
-    const pHome = (p.predicted_home_team || '').trim().toLowerCase()
-    const pAway = (p.predicted_away_team || '').trim().toLowerCase()
-    const aHome = (actualHome || '').trim().toLowerCase()
-    const aAway = (actualAway || '').trim().toLowerCase()
+    const pHome = normalizeTeamName(p.predicted_home_team)
+    const pAway = normalizeTeamName(p.predicted_away_team)
+    const aHome = normalizeTeamName(actualHome)
+    const aAway = normalizeTeamName(actualAway)
     
     if (!pHome || !pAway || pHome === 'tbd' || pAway === 'tbd') return false
 
@@ -25,8 +26,8 @@ export function getDynamicPrediction(teamPreds: any[], actual: any) {
     if (!match) return null
   }
 
-  const pHome = (match.predicted_home_team || '').trim().toLowerCase()
-  const aHome = (actualHome || '').trim().toLowerCase()
+  const pHome = normalizeTeamName(match.predicted_home_team)
+  const aHome = normalizeTeamName(actualHome)
 
   if (pHome && pHome !== 'tbd' && pHome !== aHome) {
     const flippedPred = { ...match }
@@ -186,13 +187,13 @@ export async function recalculateAll() {
       const { error } = await supabase.from('leaderboard').upsert(chunk, { onConflict: 'team_id' })
       if (error) {
         console.error('UPSERT ERROR in recalculateAll:', error)
+        throw new Error(`Failed to update leaderboard: ${error.message}`)
       }
     }
   }
 }
 
-export async function recalculateForMatch(matchId: string) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function recalculateForMatch() {
   await recalculateAll()
 }
 
@@ -255,4 +256,5 @@ export async function recalculateForTeam(teamId: string, rulesMap?: any) {
       ...breakdown,
       updated_at: new Date().toISOString()
     }, { onConflict: 'team_id' })
+    .throwOnError()
 }

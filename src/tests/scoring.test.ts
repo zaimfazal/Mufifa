@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect } from 'vitest'
 import { calculateMatchScore, calculateChampionScore } from '../lib/scoring/engine'
+import { getDynamicPrediction } from '../lib/scoring/calculator'
 import { ScoringRule } from '@/types/scoring'
 
 // Mock rules aligned with the new 9-rule scoring engine
@@ -127,5 +128,34 @@ describe('Scoring Engine (Acceptance Tests)', () => {
       const result = calculateMatchScore(pred, actual, mockRules, 1.0)
       expect(result.maxPossible).toBe(315)
     })
+  })
+
+  it('does not flip FIFA-code predictions when they match actual full team names', () => {
+    const pred = {
+      match_id: 'qf-001',
+      predicted_home_team: 'FRA',
+      predicted_away_team: 'MAR',
+      winner: 'FRA',
+      home_score: 2,
+      away_score: 0,
+      goal_scorers: { home: [7, 10], away: [] },
+      matches: { stage: 'quarter_final' },
+    } as any
+    const actual = {
+      match_id: 'qf-001',
+      winner: 'home',
+      home_score: 2,
+      away_score: 0,
+      goal_scorers: { home: [7, 10], away: [] },
+      matches: { stage: 'quarter_final', home_team: 'France', away_team: 'Morocco' },
+    } as any
+
+    const dynamicPred = getDynamicPrediction([pred], actual)
+    expect(dynamicPred.home_score).toBe(2)
+    expect(dynamicPred.away_score).toBe(0)
+
+    const result = calculateMatchScore(dynamicPred, actual, mockRules, 2.0)
+    expect(result.breakdown.scoreline).toBe(70)
+    expect(result.breakdown.scorer).toBe(500)
   })
 })

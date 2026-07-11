@@ -3,11 +3,48 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logAuditEvent } from './audit'
 import { recalculateAll } from '@/lib/scoring/calculator'
+import { DEFAULT_SCORING_RULES } from '@/lib/scoring/rules-loader'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from './require-admin'
 
+export async function ensureDefaultScoringRules() {
+  const supabase = createAdminClient()
+  const { data: existing, error } = await supabase
+    .from('scoring_rules')
+    .select('rule_key')
+
+  if (error) {
+    console.error('Error checking scoring rules:', error)
+    return { error: error.message }
+  }
+
+  const existingKeys = new Set((existing || []).map(rule => rule.rule_key))
+  const missingRules = Object.values(DEFAULT_SCORING_RULES)
+    .filter(rule => !existingKeys.has(rule.rule_key))
+    .map(rule => ({
+      rule_key: rule.rule_key,
+      rule_name: rule.rule_name,
+      points: rule.points,
+      is_enabled: rule.is_enabled,
+    }))
+
+  if (missingRules.length === 0) return { inserted: 0 }
+
+  const { error: insertError } = await supabase
+    .from('scoring_rules')
+    .insert(missingRules)
+
+  if (insertError) {
+    console.error('Error inserting default scoring rules:', insertError)
+    return { error: insertError.message }
+  }
+
+  return { inserted: missingRules.length }
+}
+
 export async function getScoringRules() {
   await requireAdmin()
+  await ensureDefaultScoringRules()
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('scoring_rules').select('*').order('id')
   
@@ -15,11 +52,19 @@ export async function getScoringRules() {
     console.error('Error fetching scoring rules:', error)
     return []
   }
-  return data || []
+  const rules = data || []
+  const hasChampionPrediction = rules.some(rule => rule.rule_key === 'champion_prediction')
+
+  return hasChampionPrediction
+    ? rules.filter(rule => rule.rule_key !== 'tournament_champion')
+    : rules
 }
 
 export async function updateScoringRules(formData: FormData): Promise<{ success?: boolean; error?: string }> {
   await requireAdmin()
+  const ensured = await ensureDefaultScoringRules()
+  if (ensured.error) return { error: `Failed to ensure scoring rules: ${ensured.error}` }
+
   const supabase = createAdminClient()
   
   const rulesToUpdate: { id: string; points: number; is_enabled: boolean; updated_at: string }[] = []
