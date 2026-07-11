@@ -196,10 +196,12 @@ export function calculateMatchScore(
   let scorerHomePerfect = false
   let scorerAwayPts = 0
   let scorerAwayPerfect = false
-  if (homeGoalsCorrect && awayGoalsCorrect) {
+  if (homeGoalsCorrect) {
     const homeRes = scorerMatchPoints(prediction, actual, rules, 'home')
     scorerHomePts = homeRes.points
     scorerHomePerfect = homeRes.perfect
+  }
+  if (awayGoalsCorrect) {
     const awayRes = scorerMatchPoints(prediction, actual, rules, 'away')
     scorerAwayPts = awayRes.points
     scorerAwayPerfect = awayRes.perfect

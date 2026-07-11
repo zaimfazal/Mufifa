@@ -89,12 +89,19 @@ describe('Scoring Engine (Acceptance Tests)', () => {
       expect(result.breakdown.scorer).toBe(150)
     })
 
-    it('scores 0 for scorers when score is wrong (gated on exact score)', () => {
+    it('awards home scorer points when home score is correct even if away score is wrong', () => {
       const pred = { winner: 'home', home_score: 2, away_score: 0, goal_scorers: { home: [10, 7], away: [] } } as any
       const actual = { winner: 'home', home_score: 2, away_score: 1, goal_scorers: { home: [10, 7], away: [] }, matches: { home_team: 'France', away_team: 'Brazil' } } as any
       const result = calculateMatchScore(pred, actual, mockRules, 1.0)
-      // score wrong (away_score mismatch) -> scorers gated out
-      expect(result.breakdown.scorer).toBe(0)
+      // home score is correct and home scorers match, so home scorer points are awarded independently
+      expect(result.breakdown.scorer).toBe(100)
+    })
+
+    it('awards away scorer points when away score is correct even if home score is wrong', () => {
+      const pred = { winner: 'away', home_score: 0, away_score: 2, goal_scorers: { home: [], away: [9, 11] } } as any
+      const actual = { winner: 'away', home_score: 1, away_score: 2, goal_scorers: { home: [], away: [9, 11] }, matches: { home_team: 'France', away_team: 'Brazil' } } as any
+      const result = calculateMatchScore(pred, actual, mockRules, 1.0)
+      expect(result.breakdown.scorer).toBe(100)
     })
 
     it('0-0 with no scorers earns full scorer points', () => {

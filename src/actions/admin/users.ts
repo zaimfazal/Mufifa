@@ -90,17 +90,51 @@ export async function getUserPredictionsCsv(userId: string) {
     
   if (!predictions || predictions.length === 0) return null
 
-  // Generate CSV manually to match template format
-  const rows = ['Match Code,Home Team,Away Team,Home Score,Away Score,Home Scorers,Away Scorers']
+  const escapeCsvValue = (value: string | number | null | undefined) => {
+    const text = String(value ?? '')
+    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+  }
+
+  // Generate CSV manually to match the limited submission template format.
+  const rows = [
+    [
+      'match_id',
+      'home_team',
+      'away_team',
+      'predicted_home_score',
+      'predicted_away_score',
+      'predicted_scorers_home',
+      'predicted_scorers_away',
+      'predicted_winner',
+    ].join(',')
+  ]
   
   for (const match of matches) {
     const pred = predictions.find(p => p.match_id === match.id)
     if (pred) {
-      const homeScorers = pred.goal_scorers?.home?.join(',') || ''
-      const awayScorers = pred.goal_scorers?.away?.join(',') || ''
-      rows.push(`${match.match_code},${match.home_team},${match.away_team},${pred.home_score ?? ''},${pred.away_score ?? ''},"${homeScorers}","${awayScorers}"`)
+      const homeScorers = pred.goal_scorers?.home?.join(';') || ''
+      const awayScorers = pred.goal_scorers?.away?.join(';') || ''
+      rows.push([
+        match.match_code,
+        match.home_team,
+        match.away_team,
+        pred.home_score,
+        pred.away_score,
+        homeScorers,
+        awayScorers,
+        pred.winner,
+      ].map(escapeCsvValue).join(','))
     } else {
-      rows.push(`${match.match_code},${match.home_team},${match.away_team},,,,`)
+      rows.push([
+        match.match_code,
+        match.home_team,
+        match.away_team,
+        '',
+        '',
+        '',
+        '',
+        '',
+      ].map(escapeCsvValue).join(','))
     }
   }
 
